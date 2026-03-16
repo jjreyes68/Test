@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Scan Tracker – Control Room</title>
+<style>
+  :root {
+    --bg: #0f172a;           /* slate-900 */
+    --panel: #111827;        /* gray-900 */
+    --muted: #9ca3af;        /* gray-400 */
+    --text: #e5e7eb;         /* gray-200 */
+    --accent: #22c55e;       /* green-500 */
+    --warn: #f59e0b;         /* amber-500 */
+    --danger: #ef4444;       /* red-500 */
+    --blue: #3b82f6;         /* blue-500 */
+    --card: #0b1220;         /* deep */
+    --badge: #1f2937;        /* gray-800 */
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    background: linear-gradient(180deg, #0b1020, #0f172a);
+    color: var(--text);
+  }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #1f2937;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  h1 { margin: 0 0 8px 0; font-size: 22px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row.right { justify-content: flex-end; }
+  .spacer { flex: 1; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .btn {
+    background: #1f2937; color: var(--text); border: 1px solid #374151;
+    padding: 8px 10px; border-radius: 10px; cursor: pointer;
+  }
+  .btn:hover { background: #111827; }
+  .btn.primary { background: var(--blue); border-color: #2563eb; }
+  .btn.success { background: var(--accent); border-color: #16a34a; color:#0b1320; }
+  .btn.warn { background: var(--warn); border-color: #d97706; color:#0b1320; }
+  .btn.danger { background: var(--danger); border-color: #dc2626; color: #0b1320; }
+  input[type="text"], input[type="number"], textarea, select {
+    background: #0b1220; color: var(--text); border: 1px solid #374151;
+    padding: 8px 10px; border-radius: 10px; outline: none; width: 100%;
+  }
+  input[type="checkbox"] { transform: scale(1.2); }
+  .grid {
+    display: grid; gap: 12px; margin-top: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  .card {
+    background: linear-gradient(180deg, #0b1220, #0b1320);
+    border: 1px solid #1f2937; border-radius: 16px; padding: 14px; position: relative;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  }
+  .card h3 { margin: 0 0 6px 0; font-size: 16px; }
+  .badge {
+    display: inline-block; font-size: 11px; color: var(--text);
+    background: var(--badge); padding: 3px 8px; border-radius: 999px; border: 1px solid #374151;
+  }
+  .status-dot {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.2) inset;
+  }
+  .green { background: var(--accent); }
+  .amber { background: var(--warn); }
+  .red { background: var(--danger); }
+  .site-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: var(--muted); }
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .kpi { background: #0b1220; border: 1px solid #1f2937; border-radius: 12px; padding: 8px; }
+  .kpi .label { font-size: 11px; color: var(--muted); }
+  .kpi .value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 16px; text-align:center; padding-bottom: 20px; }
+  .section { background: rgba(17,24,39,0.4); border: 1px solid #1f2937; border-radius: 16px; padding: 12px; margin-top: 12px; }
+  .row-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 800px) { .row-wrap { grid-template-columns: 1fr; } }
+  .pill {
+    display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid #374151; background:#0b1220;
+  }
+  .small { font-size: 12px; }
+  .table { width:100%; border-collapse: collapse; }
+  .table th, .table td { border-bottom: 1px dashed #1f2937; padding: 6px; text-align: left; }
+  .right-text { text-align: right; }
+  .link { color: #93c5fd; cursor: pointer; text-decoration: underline; }
+  .toast { position: fixed; right: 12px; bottom: 12px; background: #111827; border: 1px solid #374151; color: var(--text); padding: 10px 12px; border-radius: 10px; opacity: 0.95; }
+  .hidden { display: none; }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal { background: #0b1320; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; max-width: 560px; width: 96%; }
+  .modal h3 { margin-top: 0; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="row">
+      <h1>Scan Tracker</h1>
+      <span class="spacer"></span>
+      <span id="clock" class="pill small"></span>
+      <button class="btn" id="btnNotify">Enable Notifications</button>
+      <button class="btn" id="btnSound">Sound: On</button>
+      <button class="btn" id="btnSummary">Handoff Summary</button>
+      <button class="btn" id="btnExport">Export</button>
+      <label class="btn" for="importFile">Import</label>
+      <input id="importFile" type="file" accept=".json" style="display:none" />
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <input id="search" type="text" placeholder="Search sites…" style="max-width:260px" />
+      <select id="filter">
+        <option value="all">All</option>
+        <option value="dueSoon">Due soon</option>
+        <option value="overdue">Overdue</option>
+        <option value="ok">OK (scanned recently)</option>
+        <option value="never">Never scanned</option>
+      </select>
+      <span class="spacer"></span>
+      <button class="btn primary" id="btnAdd">Add Site</button>
+      <button class="btn" id="btnBulk">Bulk Add</button>
+      <button class="btn warn" id="btnResetShift">Reset Shift Logs</button>
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <div class="pill small">Default interval: <input id="defaultInterval" type="number" min="5" step="5" style="width:80px;margin-left:6px" /> min</div>
+      <div class="pill small">Due soon threshold: <input id="dueSoon" type="number" min="1" step="1" style="width:80px;margin-left:6px" /> min</div>
+      <div class="pill small">Timezone: <span id="tzLabel"></span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="stats" class="section row" style="gap:8px;">
+    <div class="pill small"><span class="status-dot green"></span><span id="countOK">0</span> OK</div>
+    <div class="pill small"><span class="status-dot amber"></span><span id="countSoon">0</span> Due soon</div>
+    <div class="pill small"><span class="status-dot red"></span><span id="countLate">0</span> Overdue</div>
+    <div class="pill small"><span id="countNever">0</span> Never scanned</div>
+    <div class="spacer"></div>
+    <div class="pill small"><span id="totalSites">0</span> Sites</div>
+  </div>
+
+  <div id="grid" class="grid" aria-live="polite"></div>
+
+  <footer>
+    Single-file app — data stored in your browser via localStorage.<br/>
+    Tip: Export periodically if you switch machines/browsers.
+  </footer>
+</main>
+
+<!-- Scan Modal -->
+<div class="modal-backdrop" id="scanModal">
+  <div class="modal">
+    <h3 id="scanTitle">Log Scan</h3>
+    <div id="scanMetrics"></div>
+    <div style="margin-top:8px">
+      <label class="muted small">Notes</label>
+      <textarea id="scanNotes" rows="3" placeholder="Optional notes…"></textarea>
+    </div>
+    <div class="row right" style="margin-top:10px;">
+      <button class="btn" id="scanCancel">Cancel</button>
+      <button class="btn success" id="scanSave">Save Scan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Site Editor Modal -->
+<div class="modal-backdrop" id="siteModal">
+  <div class="modal">
+    <h3 id="siteTitle">Add / Edit Site</h3>
+    <div class="row-wrap">
+      <div>
+        <label class="muted small">Site name</label>
+        <input id="siteName" type="text" placeholder="e.g., Desert Ridge BESS" />
+      </div>
+      <div>
+        <label class="muted small">Scan interval (minutes)</label>
+        <input id="siteInterval" type="number" min="5" step="5" />
+      </div>
+    </div>
+    <div style="margin-top:8px;">
+      <label class="muted small">Metrics (name | baseline | unit | guidance)</label>
+      <table class="table" id="metricTable">
+        <thead><tr><th>Name</th><th>Baseline</th><th>Unit</th><th>Guidance</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button class="btn" id="addMetric">Add Metric</button>
+    </div>
+    <div class="row right" style="margin-top:10px;">
+      <button class="btn" id="siteCancel">Cancel</button>
+      <button class="btn success" id="siteSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Add Modal -->
+<div class="modal-backdrop" id="bulkModal">
+  <div class="modal">
+    <h3>Bulk Add Sites</h3>
+    <p class="muted small">Paste one site name per line. Each will use the default interval.</p>
+    <textarea id="bulkNames" rows="8" placeholder="Site 1&#10;Site 2&#10;Site 3"></textarea>
+    <div class="row right" style="margin-top:10px;">
+      <button class="btn" id="bulkCancel">Cancel</button>
+      <button class="btn success" id="bulkSave">Add Sites</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script>
+/* ========= State ========= */
+const LS_KEY = "scanTracker.v1";
+const DEFAULTS = {
+  settings: { defaultInterval: 30, dueSoonMin: 5, sound: true },
+  sites: [],
+  logs: [] // {siteId, ts, metrics:{name:value}, note}
+};
+let state = loadState();
+
+/* ========= Utilities ========= */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return structuredClone(DEFAULTS);
+    const parsed = JSON.parse(raw);
+    // migrate defaults
+    parsed.settings = { ...DEFAULTS.settings, ...(parsed.settings || {}) };
+    parsed.sites = parsed.sites || [];
+    parsed.logs = parsed.logs || [];
+    return parsed;
+  } catch (e) {
+    console.error("Failed to load state", e);
+    return structuredClone(DEFAULTS);
+  }
+}
+function saveState() {
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
+}
+function id() { return Math.random().toString(36).slice(2,9); }
+function fmtMinSec(ms) {
+  const s = Math.max(0, Math.floor(ms/1000));
+  const m = Math.floor(s/60), r = s%60;
+  return `${m}:${String(r).padStart(2,'0')}`;
+}
+function timeAgo(ts) {
+  if (!ts) return "—";
+  const s = Math.max(1, Math.floor((Date.now()-ts)/1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s/60); if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m/60); const rm = m % 60;
+  return `${h}h ${rm}m ago`;
+}
+function toast(msg, ms=2500) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.remove("hidden");
+  setTimeout(()=>el.classList.add("hidden"), ms);
+}
+
+/* ========= Sound / Notifications ========= */
+let chime;
+function ensureChime() {
+  if (!chime) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    chime = () => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = 880; // A5
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.6);
+      o.start(); o.stop(ctx.currentTime+0.6);
+    };
+  }
+}
+function notify(title, body) {
+  try {
+    if (Notification.permission === "granted") {
+      new Notification(title, { body });
+    }
+  } catch(e){}
+  if (state.settings.sound) { ensureChime(); chime(); }
+}
+
+/* ========= Derived: last scan, next due, status ========= */
+function lastScan(siteId) {
+  const logs = state.logs.filter(l => l.siteId === siteId).sort((a,b)=>b.ts-a.ts);
+  return logs[0]?.ts || null;
+}
+function computeStatus(site) {
+  const last = lastScan(site.id);
+  const intervalMin = site.intervalMin ?? state.settings.defaultInterval;
+  const intervalMs = intervalMin * 60 * 1000;
+  const dueAt = last ? last + intervalMs : 0;
+  const remaining = last ? (dueAt - Date.now()) : -Infinity;
+  let status = "never"; // never scanned
+  if (last) {
+    if (remaining < 0) status = "overdue";
+    else if (remaining <= state.settings.dueSoonMin*60*1000) status = "dueSoon";
+    else status = "ok";
+  }
+  return { last, dueAt, remaining, status };
+}
+
+/* ========= Render ========= */
+function render() {
+  document.getElementById("tzLabel").textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  document.getElementById("defaultInterval").value = state.settings.defaultInterval;
+  document.getElementById("dueSoon").value = state.settings.dueSoonMin;
+  document.getElementById("btnSound").textContent = `Sound: ${state.settings.sound ? "On" : "Off"}`;
+
+  const q = document.getElementById("search").value.toLowerCase().trim();
+  const filter = document.getElementById("filter").value;
+
+  let countOK=0, countSoon=0, countLate=0, countNever=0;
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  const sites = [...state.sites].sort((a,b)=>a.name.localeCompare(b.name));
+  for (const site of sites) {
+    const d = computeStatus(site);
+    if (d.status === "ok") countOK++;
+    if (d.status === "dueSoon") countSoon++;
+    if (d.status === "overdue") countLate++;
+    if (d.status === "never") countNever++;
+
+    // filter
+    const match = site.name.toLowerCase().includes(q);
+    const pass = (filter==="all")
+      || (filter==="ok" && d.status==="ok")
+      || (filter==="dueSoon" && d.status==="dueSoon")
+      || (filter==="overdue" && d.status==="overdue")
+      || (filter==="never" && d.status==="never");
+    if (!match || !pass) continue;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const dotClass = d.status==="ok" ? "green" : d.status==="dueSoon" ? "amber" : d.status==="overdue" ? "red" : "";
+    const intervalMin = site.intervalMin ?? state.settings.defaultInterval;
+
+    card.innerHTML = `
+      <h3>${site.name}</h3>
+      <div class="row" style="gap:6px; flex-wrap:wrap;">
+        <span class="badge"><span class="status-dot ${dotClass}"></span>${d.status==="never"?"Never scanned":d.status==="overdue"?"Overdue":d.status==="dueSoon"?"Due soon":"OK"}</span>
+        <span class="badge">Interval: ${intervalMin}m</span>
+        <span class="badge">Last: ${d.last? new Date(d.last).toLocaleTimeString() : "—"}</span>
+        <span class="badge">Next due: ${d.last? new Date(d.dueAt).toLocaleTimeString() : "—"}</span>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Time since last</div><div class="value">${timeAgo(d.last)}</div></div>
+        <div class="kpi"><div class="label">Time remaining</div><div class="value">${d.last? fmtMinSec(d.dueAt - Date.now()) : "—"}</div></div>
+      </div>
+      <div class="site-actions">
+        <button class="btn success" data-act="scan" data-id="${site.id}">Scan Now</button>
+        <button class="btn" data-act="details" data-id="${site.id}">Details</button>
+        <button class="btn" data-act="edit" data-id="${site.id}">Edit</button>
+        <button class="btn danger" data-act="delete" data-id="${site.id}">Delete</button>
+      </div>
+      <details>
+        <summary>Metrics & Guidance</summary>
+        ${site.metrics?.length ? `
+          <table class="table small">
+            <thead><tr><th>Metric</th><th>Baseline</th><th>Unit</th><th>Guidance</th></tr></thead>
+            <tbody>
+              ${site.metrics.map(m=>`
+                <tr><td>${m.name||""}</td><td>${m.baseline??""}</td><td>${m.unit||""}</td><td>${m.guide||""}</td></tr>
+              `).join("")}
+            </tbody>
+          </table>` : `<div class="muted small">No metrics defined yet.</div>`
+        }
+      </details>
+    `;
+    grid.appendChild(card);
+  }
+
+  document.getElementById("countOK").textContent = countOK;
+  document.getElementById("countSoon").textContent = countSoon;
+  document.getElementById("countLate").textContent = countLate;
+  document.getElementById("countNever").textContent = countNever;
+  document.getElementById("totalSites").textContent = state.sites.length;
+
+  // wire buttons
+  grid.querySelectorAll("button").forEach(btn=>{
+    const act = btn.getAttribute("data-act");
+    const sid = btn.getAttribute("data-id");
+    if (act==="scan") btn.onclick = ()=> openScanModal(sid);
+    if (act==="edit") btn.onclick = ()=> openSiteModal(sid);
+    if (act==="delete") btn.onclick = ()=> deleteSite(sid);
+    if (act==="details") btn.onclick = ()=> alertSiteDetails(sid);
+  });
+}
+
+function alertSiteDetails(siteId) {
+  const site = state.sites.find(s=>s.id===siteId);
+  const last = lastScan(siteId);
+  const intervalMin = site.intervalMin ?? state.settings.defaultInterval;
+  const metrics = (site.metrics||[]).map(m => `- ${m.name} — baseline ${m.baseline ?? ""} ${m.unit || ""}${m.guide? " ("+m.guide+")":""}`).join("\n");
+  const msg = `${site.name}
+Interval: ${intervalMin} minutes
+Last scan: ${last? new Date(last).toLocaleString() : "Never"}
+
+Metrics:
+${metrics || "(none)"}`;
+
+  alert(msg);
+}
+
+/* ========= Site CRUD ========= */
+let editingSiteId = null;
+function openSiteModal(siteId=null) {
+  editingSiteId = siteId;
+  document.getElementById("siteTitle").textContent = siteId ? "Edit Site" : "Add Site";
+  document.getElementById("siteName").value = "";
+  document.getElementById("siteInterval").value = state.settings.defaultInterval;
+  const tbody = document.querySelector("#metricTable tbody");
+  tbody.innerHTML = "";
+
+  if (siteId) {
+    const site = state.sites.find(s=>s.id===siteId);
+    document.getElementById("siteName").value = site.name;
+    document.getElementById("siteInterval").value = site.intervalMin ?? state.settings.defaultInterval;
+    for (const m of (site.metrics||[])) addMetricRow(m.name, m.baseline, m.unit, m.guide);
+  } else {
+    // seed one demo metric row
+    addMetricRow("Voltage", "", "V", "Expected operating band");
+  }
+
+  document.getElementById("siteModal").style.display = "flex";
+}
+function addMetricRow(name="", baseline="", unit="", guide="") {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="text" value="${name}"></td>
+    <td><input type="text" value="${baseline}"></td>
+    <td><input type="text" value="${unit}"></td>
+    <td><input type="text" value="${guide}"></td>
+    <td class="right-text"><button class="btn danger small">✕</button></td>
+  `;
+  tr.querySelector("button").onclick = ()=> tr.remove();
+  document.querySelector("#metricTable tbody").appendChild(tr);
+}
+function collectMetricsFromTable() {
+  const rows = [...document.querySelectorAll("#metricTable tbody tr")];
+  return rows.map(r=>{
+    const inputs = r.querySelectorAll("input");
+    return { name: inputs[0].value.trim(), baseline: inputs[1].value.trim(), unit: inputs[2].value.trim(), guide: inputs[3].value.trim() };
+  }).filter(m=>m.name);
+}
+function saveSiteFromModal() {
+  const name = document.getElementById("siteName").value.trim();
+  const intervalMin = Math.max(1, Number(document.getElementById("siteInterval").value) || state.settings.defaultInterval);
+  const metrics = collectMetricsFromTable();
+  if (!name) { toast("Site name is required"); return; }
+
+  if (editingSiteId) {
+    const s = state.sites.find(x=>x.id===editingSiteId);
+    s.name = name; s.intervalMin = intervalMin; s.metrics = metrics;
+  } else {
+    state.sites.push({ id: id(), name, intervalMin, metrics });
+  }
+  saveState();
+  document.getElementById("siteModal").style.display = "none";
+  render();
+}
+function deleteSite(siteId) {
+  if (!confirm("Delete this site and its logs?")) return;
+  state.sites = state.sites.filter(s=>s.id!==siteId);
+  state.logs = state.logs.filter(l=>l.siteId!==siteId);
+  saveState(); render(); toast("Deleted");
+}
+
+/* ========= Scan Modal ========= */
+let scanningSiteId = null;
+function openScanModal(siteId) {
+  scanningSiteId = siteId;
+  const site = state.sites.find(s=>s.id===siteId);
+  document.getElementById("scanTitle").textContent = `Log Scan — ${site.name}`;
+  const container = document.getElementById("scanMetrics");
+  container.innerHTML = "";
+
+  if (site.metrics?.length) {
+    for (const m of site.metrics) {
+      const wrap = document.createElement("div");
+      wrap.style.marginTop = "6px";
+      wrap.innerHTML = `
+        <div class="row" style="gap:10px; align-items:end;">
+          <div style="flex: 1;">
+            <label class="muted small">${m.name}${m.unit?` (${m.unit})`:""}</label>
+            <input type="text" data-metric="${m.name}" placeholder="Enter value or leave blank"/>
+          </div>
+          <div style="width: 180px;">
+            <label class="muted small">Baseline</label>
+            <div class="pill small">${m.baseline ?? ""} ${m.unit || ""}</div>
+          </div>
+        </div>
+        ${m.guide ? `<div class="muted small" style="margin-top:2px;">Guidance: ${m.guide}</div>` : ""}
+      `;
+      container.appendChild(wrap);
+    }
+  } else {
+    container.innerHTML = `<div class="muted small">No metrics defined for this site. You can still log notes.</div>`;
+  }
+
+  document.getElementById("scanNotes").value = "";
+  document.getElementById("scanModal").style.display = "flex";
+}
+function saveScan() {
+  const site = state.sites.find(s=>s.id===scanningSiteId);
+  const inputs = document.querySelectorAll("#scanMetrics [data-metric]");
+  const metrics = {};
+  inputs.forEach(inp=>{
+    const v = inp.value.trim();
+    if (v) metrics[inp.getAttribute("data-metric")] = v;
+  });
+  const note = document.getElementById("scanNotes").value.trim();
+  state.logs.push({ siteId: site.id, ts: Date.now(), metrics, note });
+  saveState();
+  document.getElementById("scanModal").style.display = "none";
+  render();
+  toast("Scan logged");
+}
+
+/* ========= Bulk Add ========= */
+function openBulk() {
+  document.getElementById("bulkNames").value = "";
+  document.getElementById("bulkModal").style.display = "flex";
+}
+function saveBulk() {
+  const text = document.getElementById("bulkNames").value;
+  const names = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const interval = state.settings.defaultInterval;
+  for (const n of names) {
+    state.sites.push({ id: id(), name: n, intervalMin: interval, metrics: [] });
+  }
+  saveState(); render();
+  document.getElementById("bulkModal").style.display = "none";
+  toast(`Added ${names.length} site(s)`);
+}
+
+/* ========= Export / Import ========= */
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `scan-tracker-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function exportCSV() {
+  // Optional: not wired to UI, but kept for completeness
+  const rows = [["site","timestamp","localTime","metric","value","note"]];
+  for (const l of state.logs) {
+    const site = state.sites.find(s=>s.id===l.siteId);
+    const base = [site?.name||l.siteId, l.ts, new Date(l.ts).toLocaleString()];
+    const keys = Object.keys(l.metrics||{});
+    if (keys.length===0) rows.push([...base, "", "", l.note||""]);
+    else for (const k of keys) rows.push([...base, k, l.metrics[k], l.note||""]);
+  }
+  const csv = rows.map(r=>r.map(v=>{
+    const s = String(v??"");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+  }).join(",")).join("\n");
+  const blob = new Blob([csv], {type: "text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `scan-logs-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+function importJSONFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const obj = JSON.parse(e.target.result);
+      if (!obj || !obj.sites || !obj.settings) throw new Error("Invalid file");
+      state = obj; saveState(); render();
+      toast("Imported");
+    } catch (err) {
+      alert("Import failed: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ========= Handoff Summary ========= */
+function buildHandoffSummary() {
+  const lines = [];
+  const sites = [...state.sites].sort((a,b)=>a.name.localeCompare(b.name));
+  const soonMin = state.settings.dueSoonMin;
+  let overdue=0, soon=0, ok=0, never=0;
+
+  for (const s of sites) {
+    const d = computeStatus(s);
+    const interval = s.intervalMin ?? state.settings.defaultInterval;
+    if (d.status === "overdue") {
+      overdue++;
+      lines.push(`- OVERDUE: ${s.name} (last ${timeAgo(d.last)}, interval ${interval}m)`);
+    } else if (d.status === "dueSoon") {
+      soon++;
+      lines.push(`- DUE SOON (<${soonMin}m): ${s.name} (next due ${new Date(d.dueAt).toLocaleTimeString()})`);
+    } else if (d.status === "never") {
+      never++;
+      lines.push(`- NEVER SCANNED: ${s.name} (interval ${interval}m)`);
+    }
+  }
+  if (lines.length === 0) lines.push("- All sites OK (scanned within interval).");
+
+  const header = `Handoff — ${new Date().toLocaleString()}
+Overdue: ${overdue} | Due soon: ${soon} | Never: ${never} | OK: ${state.sites.length - overdue - soon - never}`;
+  return header + "\n" + lines.join("\n");
+}
+
+/* ========= Clock / Ticker ========= */
+function tick() {
+  const now = new Date();
+  document.getElementById("clock").textContent = now.toLocaleString();
+  // Evaluate alarms
+  for (const s of state.sites) {
+    const d = computeStatus(s);
+    if (d.status === "overdue") {
+      // Notify once per overdue window chunk
+      const key = `notified:${s.id}`;
+      const lastNotified = sessionStorage.getItem(key);
+      const everyMs = 5*60*1000; // repeat every 5 min
+      if (!lastNotified || (Date.now()-Number(lastNotified) > everyMs)) {
+        notify("Scan overdue", s.name + " needs a scan");
+        sessionStorage.setItem(key, String(Date.now()));
+      }
+    }
+  }
+  render();
+}
+setInterval(tick, 1000);
+
+/* ========= Wire UI ========= */
+document.getElementById("btnAdd").onclick = ()=> openSiteModal(null);
+document.getElementById("addMetric").onclick = ()=> addMetricRow();
+document.getElementById("siteCancel").onclick = ()=> document.getElementById("siteModal").style.display = "none";
+document.getElementById("siteSave").onclick = saveSiteFromModal;
+
+document.getElementById("scanCancel").onclick = ()=> document.getElementById("scanModal").style.display = "none";
+document.getElementById("scanSave").onclick = saveScan;
+
+document.getElementById("btnBulk").onclick = openBulk;
+document.getElementById("bulkCancel").onclick = ()=> document.getElementById("bulkModal").style.display = "none";
+document.getElementById("bulkSave").onclick = saveBulk;
+
+document.getElementById("btnExport").onclick = exportJSON;
+document.getElementById("importFile").onchange = e => {
+  const file = e.target.files[0]; if (file) importJSONFile(file);
+  e.target.value = "";
+};
+
+document.getElementById("btnSummary").onclick = ()=>{
+  const text = buildHandoffSummary();
+  navigator.clipboard.writeText(text).then(()=>{
+    toast("Handoff copied to clipboard");
+    alert(text);
+  }).catch(()=>{
+    alert(text);
+  });
+};
+
+document.getElementById("btnNotify").onclick = async ()=>{
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") toast("Notifications enabled");
+    else toast("Notifications not granted");
+  } catch(e){ toast("Notifications not supported"); }
+};
+document.getElementById("btnSound").onclick = ()=>{
+  state.settings.sound = !state.settings.sound;
+  saveState(); render();
+};
+
+document.getElementById("search").oninput = render;
+document.getElementById("filter").onchange = render;
+document.getElementById("defaultInterval").onchange = e=>{
+  state.settings.defaultInterval = Math.max(1, Number(e.target.value)||30);
+  saveState(); render();
+};
+document.getElementById("dueSoon").onchange = e=>{
+  state.settings.dueSoonMin = Math.max(1, Number(e.target.value)||5);
+  saveState(); render();
+};
+document.getElementById("btnResetShift").onclick = ()=>{
+  if (!confirm("Clear all scan logs for this shift? Sites & settings are kept.")) return;
+  state.logs = []; saveState(); render(); toast("Shift logs cleared");
+};
+
+/* Seed example sites on first load */
+if (state.sites.length === 0) {
+  state.sites.push(
+    { id:id(), name:"Site A", intervalMin:30, metrics:[
+      {name:"Voltage", baseline:"13.2", unit:"kV", guide:"±0.5 kV"},
+      {name:"Inverter Status", baseline:"RUN", unit:"", guide:"RUN / ENABLED"}
+    ]},
+    { id:id(), name:"Site B", intervalMin:30, metrics:[
+      {name:"SOC", baseline:"70", unit:"%", guide:"Keep > 25%"},
+      {name:"Power", baseline:"0", unit:"MW", guide:"Idle unless dispatched"}
+    ]}
+  );
+  saveState();
+}
+
+/* kick */
+render();
+tick();
+</script>
+</body>
+</html>
