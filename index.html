@@ -52,7 +52,7 @@
   .btn.danger { background: var(--danger); border-color: #dc2626; color: #0b1320; }
   .btn.timer { background: var(--purple); border-color: #9333ea; color:#0b1320; }
   .btn.sm { padding: 4px 6px; font-size: 11px; }
-  .btn.lg { padding: 12px 16px; font-size: 14px; font-weight: 600; }
+  .btn.md { padding: 8px 12px; font-size: 13px; font-weight: 500; }
   input[type="text"], input[type="number"], input[type="date"], textarea, select {
     background: #0b1220; color: var(--text); border: 1px solid #374151;
     padding: 8px 10px; border-radius: 10px; outline: none; width: 100%;
@@ -60,6 +60,12 @@
   .grid {
     display: grid; gap: 12px; margin-top: 12px;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  .section-divider {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(31, 41, 55, 0.4), transparent);
+    margin: 8px 0;
   }
   .card {
     background: linear-gradient(180deg, #0b1220, #0b1320);
@@ -81,9 +87,9 @@
   .green { background: var(--accent); }
   .amber { background: var(--warn); }
   .red { background: var(--danger); }
-  .site-actions { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
-  .site-actions .btn.lg { flex: 1; min-width: 200px; }
-  .site-actions-secondary { display: flex; gap: 4px; flex-wrap: wrap; }
+  .site-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .site-actions .btn.md { flex: 1; }
+  .site-actions-secondary { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
   .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
   .kpi { background: #0b1220; border: 1px solid #1f2937; border-radius: 12px; padding: 8px; }
   .kpi .label { font-size: 11px; color: var(--muted); }
@@ -409,7 +415,6 @@ let nercSites = JSON.parse(localStorage.getItem(NERC_KEY) || "[]");
 let syncInterval = null;
 let timers = {};
 let timerIntervals = {};
-let renderInterval = null;
 
 /* ===== UTILITIES ===== */
 function loadState() {
@@ -626,35 +631,49 @@ function formatTimerDisplay(siteId) {
 /* ===== SORTING ===== */
 function getSortedSites() {
   const sites = [...state.sites];
-  return sites.sort((a, b) => {
-    const statusA = computeStatus(a);
-    const statusB = computeStatus(b);
-    
-    // Overdue first
-    if (statusA.status === "overdue" && statusB.status !== "overdue") return -1;
-    if (statusA.status !== "overdue" && statusB.status === "overdue") return 1;
-    
-    // Within overdue, sort by time remaining (least first)
-    if (statusA.status === "overdue" && statusB.status === "overdue") {
-      return statusA.remaining - statusB.remaining;
-    }
-    
-    // Due soon second
-    if (statusA.status === "dueSoon" && statusB.status !== "dueSoon") return -1;
-    if (statusA.status !== "dueSoon" && statusB.status === "dueSoon") return 1;
-    
-    // Within due soon, sort by time remaining (least first)
-    if (statusA.status === "dueSoon" && statusB.status === "dueSoon") {
-      return statusA.remaining - statusB.remaining;
-    }
-    
-    // Never scanned third
-    if (statusA.status === "never" && statusB.status !== "never") return -1;
-    if (statusA.status !== "never" && statusB.status === "never") return 1;
-    
-    // OK last, alphabetical
-    return a.name.localeCompare(b.name);
-  });
+  
+  // Separate NERC and non-NERC sites
+  const nercSitesArr = sites.filter(s => nercSites.includes(s.id));
+  const nonNercSitesArr = sites.filter(s => !nercSites.includes(s.id));
+  
+  // Sort each group
+  const sortSiteGroup = (group) => {
+    return group.sort((a, b) => {
+      const statusA = computeStatus(a);
+      const statusB = computeStatus(b);
+      
+      // Overdue first
+      if (statusA.status === "overdue" && statusB.status !== "overdue") return -1;
+      if (statusA.status !== "overdue" && statusB.status === "overdue") return 1;
+      
+      // Within overdue, sort by time remaining (least first)
+      if (statusA.status === "overdue" && statusB.status === "overdue") {
+        return statusA.remaining - statusB.remaining;
+      }
+      
+      // Due soon second
+      if (statusA.status === "dueSoon" && statusB.status !== "dueSoon") return -1;
+      if (statusA.status !== "dueSoon" && statusB.status === "dueSoon") return 1;
+      
+      // Within due soon, sort by time remaining (least first)
+      if (statusA.status === "dueSoon" && statusB.status === "dueSoon") {
+        return statusA.remaining - statusB.remaining;
+      }
+      
+      // Never scanned third
+      if (statusA.status === "never" && statusB.status !== "never") return -1;
+      if (statusA.status !== "never" && statusB.status === "never") return 1;
+      
+      // OK last, alphabetical
+      return a.name.localeCompare(b.name);
+    });
+  };
+  
+  const sortedNerc = sortSiteGroup(nercSitesArr);
+  const sortedNonNerc = sortSiteGroup(nonNercSitesArr);
+  
+  // Combine: NERC first, then non-NERC
+  return [...sortedNerc, ...sortedNonNerc];
 }
 
 /* ===== RENDER MAIN VIEW ===== */
@@ -665,6 +684,8 @@ function updateDisplay() {
   
   cards.forEach(card => {
     const siteId = card.dataset.siteId;
+    if (!siteId) return;
+    
     const site = state.sites.find(s => s.id === siteId);
     if (!site) return;
     
@@ -711,7 +732,20 @@ function render() {
   grid.innerHTML = "";
 
   const sites = getSortedSites();
-  for (const site of sites) {
+  let lastWasNerc = null;
+  let needsDivider = false;
+
+  for (let idx = 0; idx < sites.length; idx++) {
+    const site = sites[idx];
+    const isNerc = nercSites.includes(site.id);
+    
+    // Check if we need to add divider before this site
+    if (lastWasNerc === true && isNerc === false && needsDivider) {
+      const divider = document.createElement("div");
+      divider.className = "section-divider";
+      grid.appendChild(divider);
+    }
+    
     const d = computeStatus(site);
     if (d.status === "ok") countOK++;
     if (d.status === "dueSoon") countSoon++;
@@ -726,6 +760,9 @@ function render() {
       || (filter==="never" && d.status==="never");
     if (!match || !pass) continue;
 
+    needsDivider = true;
+    lastWasNerc = isNerc;
+
     const card = document.createElement("div");
     card.className = "card";
     card.dataset.siteId = site.id;
@@ -735,7 +772,6 @@ function render() {
     const isExpanded = expandedMetrics.has(site.id);
     const hasTimer = !!timers[site.id];
     const timerDisplay = formatTimerDisplay(site.id);
-    const isNerc = nercSites.includes(site.id);
 
     card.innerHTML = `
       <h3>
@@ -754,7 +790,7 @@ function render() {
         <div class="kpi"><div class="label">Time remaining</div><div class="value" data-kpi="remaining">${d.last? fmtMinSec(d.dueAt - Date.now()) : "—"}</div></div>
       </div>
       <div class="site-actions">
-        <button class="btn lg success" data-act="scan" data-id="${site.id}" style="flex: 1;">🔍 SCAN NOW</button>
+        <button class="btn md success" data-act="scan" data-id="${site.id}">Scan Now</button>
       </div>
       <div class="site-actions-secondary">
         <button class="btn sm" data-act="details" data-id="${site.id}">Details</button>
