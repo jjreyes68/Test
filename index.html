@@ -73,62 +73,6 @@
   .amber { background: var(--warn); }
   .red { background: var(--danger); }
   .site-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metrics Page</title>
-    <style>
-        .collapsible {
-            background-color: #777;
-            color: white;
-            cursor: pointer;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            font-size: 15px;
-        }
-        .active, .collapsible:hover {
-            background-color: #555;
-        }
-        .content {
-            padding: 0 18px;
-            display: block;
-            overflow: hidden;
-            background-color: #f1f1f1;
-        }
-    </style>
-</head>
-<body>
-
-<h2>Metrics</h2>
-
-<button class="collapsible">Metrics Dropdown</button>
-<div class="content">
-    <p>Metric 1: Example Data</p>
-    <p>Metric 2: Example Data</p>
-    <p>Metric 3: Example Data</p>
-</div>
-
-<script>
-    document.querySelector('.collapsible').addEventListener('click', function() {
-        this.classList.toggle('active');
-        var content = this.nextElementSibling;
-        if (content.style.display === "block") {
-            content.style.display = "none";
-        } else {
-            content.style.display = "block";
-        }
-    });
-</script>
-
-</body>
-</html>
-details { margin-top: 8px; }
-  summary { cursor: pointer; color: var(--muted); }
   .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
   .kpi { background: #0b1220; border: 1px solid #1f2937; border-radius: 12px; padding: 8px; }
   .kpi .label { font-size: 11px; color: var(--muted); }
@@ -147,6 +91,23 @@ details { margin-top: 8px; }
   .link { color: #93c5fd; cursor: pointer; text-decoration: underline; }
   .toast { position: fixed; right: 12px; bottom: 12px; background: #111827; border: 1px solid #374151; color: var(--text); padding: 10px 12px; border-radius: 10px; opacity: 0.95; }
   .hidden { display: none; }
+
+  /* Custom toggle button */
+  .toggle-btn {
+    background: none; border: none; color: var(--muted); cursor: pointer; padding: 0;
+    font-size: 12px; display: flex; align-items: center; gap: 4px; margin-top: 8px;
+  }
+  .toggle-btn:hover { color: var(--text); }
+  .toggle-btn .caret {
+    display: inline-block; transition: transform 0.2s ease;
+  }
+  .toggle-btn.open .caret { transform: rotate(180deg); }
+  .metrics-content {
+    display: none; margin-top: 8px;
+  }
+  .metrics-content.open {
+    display: block;
+  }
 
   /* Modal */
   .modal-backdrop {
@@ -279,6 +240,7 @@ const DEFAULTS = {
   logs: [] // {siteId, ts, metrics:{name:value}, note}
 };
 let state = loadState();
+let expandedMetrics = new Set(); // Track which sites have metrics expanded
 
 /* ========= Utilities ========= */
 function loadState() {
@@ -401,6 +363,7 @@ function render() {
 
     const dotClass = d.status==="ok" ? "green" : d.status==="dueSoon" ? "amber" : d.status==="overdue" ? "red" : "";
     const intervalMin = site.intervalMin ?? state.settings.defaultInterval;
+    const isExpanded = expandedMetrics.has(site.id);
 
     card.innerHTML = `
       <h3>${site.name}</h3>
@@ -420,8 +383,11 @@ function render() {
         <button class="btn" data-act="edit" data-id="${site.id}">Edit</button>
         <button class="btn danger" data-act="delete" data-id="${site.id}">Delete</button>
       </div>
-      <details>
-        <summary>Metrics & Guidance</summary>
+      <button class="toggle-btn ${isExpanded ? 'open' : ''}" data-toggle-id="${site.id}">
+        <span class="caret">▼</span>
+        Metrics & Guidance
+      </button>
+      <div class="metrics-content ${isExpanded ? 'open' : ''}" data-metrics-id="${site.id}">
         ${site.metrics?.length ? `
           <table class="table small">
             <thead><tr><th>Metric</th><th>Baseline</th><th>Unit</th><th>Guidance</th></tr></thead>
@@ -432,7 +398,7 @@ function render() {
             </tbody>
           </table>` : `<div class="muted small">No metrics defined yet.</div>`
         }
-      </details>
+      </div>
     `;
     grid.appendChild(card);
   }
@@ -447,11 +413,25 @@ function render() {
   grid.querySelectorAll("button").forEach(btn=>{
     const act = btn.getAttribute("data-act");
     const sid = btn.getAttribute("data-id");
+    const toggleId = btn.getAttribute("data-toggle-id");
     if (act==="scan") btn.onclick = ()=> openScanModal(sid);
     if (act==="edit") btn.onclick = ()=> openSiteModal(sid);
     if (act==="delete") btn.onclick = ()=> deleteSite(sid);
     if (act==="details") btn.onclick = ()=> alertSiteDetails(sid);
+    if (toggleId) btn.onclick = ()=> toggleMetrics(toggleId, btn);
   });
+}
+
+function toggleMetrics(siteId, btn) {
+  if (expandedMetrics.has(siteId)) {
+    expandedMetrics.delete(siteId);
+    btn.classList.remove('open');
+    document.querySelector(`[data-metrics-id="${siteId}"]`).classList.remove('open');
+  } else {
+    expandedMetrics.add(siteId);
+    btn.classList.add('open');
+    document.querySelector(`[data-metrics-id="${siteId}"]`).classList.add('open');
+  }
 }
 
 function alertSiteDetails(siteId) {
@@ -530,6 +510,7 @@ function deleteSite(siteId) {
   if (!confirm("Delete this site and its logs?")) return;
   state.sites = state.sites.filter(s=>s.id!==siteId);
   state.logs = state.logs.filter(l=>l.siteId!==siteId);
+  expandedMetrics.delete(siteId);
   saveState(); render(); toast("Deleted");
 }
 
@@ -667,8 +648,7 @@ function buildHandoffSummary() {
   }
   if (lines.length === 0) lines.push("- All sites OK (scanned within interval).");
 
-  const header = `Handoff — ${new Date().toLocaleString()}
-Overdue: ${overdue} | Due soon: ${soon} | Never: ${never} | OK: ${state.sites.length - overdue - soon - never}`;
+  const header = `Handoff — ${new Date().toLocaleString()}\nOverdue: ${overdue} | Due soon: ${soon} | Never: ${never} | OK: ${state.sites.length - overdue - soon - never}`;
   return header + "\n" + lines.join("\n");
 }
 
