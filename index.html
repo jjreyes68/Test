@@ -73,11 +73,12 @@
     border: 1px solid #1f2937; border-radius: 16px; padding: 14px; position: relative;
     box-shadow: 0 6px 16px rgba(0,0,0,0.35);
   }
-  .card h3 { margin: 0 0 6px 0; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .card h3 { margin: 0 0 6px 0; font-size: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .badge {
     display: inline-block; font-size: 11px; color: var(--text);
     background: var(--badge); padding: 3px 8px; border-radius: 999px; border: 1px solid #374151;
   }
+  .badge.status { font-size: 12px; font-weight: 600; padding: 4px 10px; margin-top: 8px; }
   .badge.nerc { background: rgba(6, 182, 212, 0.2); border-color: var(--nerc); color: #67e8f9; font-weight: 600; }
   .badge.timer-active { background: rgba(167, 139, 250, 0.3); border-color: var(--purple); color: #e9d5ff; animation: pulse 2s infinite; }
   .badge.adhoc { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #e9d5ff; font-size: 10px; }
@@ -582,7 +583,6 @@ function computeStatus(site) {
   const last = lastScan(site.id);
   const intervalMin = site.intervalMin ?? null;
   
-  // If no interval, it's ad-hoc
   if (intervalMin === null || intervalMin === 0 || intervalMin === "") {
     return { last, dueAt: null, remaining: null, status: "adhoc" };
   }
@@ -645,7 +645,6 @@ function formatTimerDisplay(siteId) {
 function getSortedSites() {
   const sites = [...state.sites];
   
-  // Separate by cadence type
   const cadencedSites = sites.filter(s => {
     const interval = s.intervalMin;
     return interval !== null && interval !== 0 && interval !== "";
@@ -655,7 +654,6 @@ function getSortedSites() {
     return interval === null || interval === 0 || interval === "";
   });
   
-  // Within cadenced, separate NERC and non-NERC
   const nercCadenced = cadencedSites.filter(s => nercSites.includes(s.id));
   const nonNercCadenced = cadencedSites.filter(s => !nercSites.includes(s.id));
   
@@ -689,7 +687,6 @@ function getSortedSites() {
   const sortedNonNercCadenced = sortSiteGroup(nonNercCadenced);
   const sortedAdhoc = adhocSites.sort((a, b) => a.name.localeCompare(b.name));
   
-  // Combine: NERC cadenced, non-NERC cadenced, then ad-hoc
   return [...sortedNercCadenced, ...sortedNonNercCadenced, ...sortedAdhoc];
 }
 
@@ -753,7 +750,6 @@ function render() {
     const d = computeStatus(site);
     const isAdhoc = d.status === "adhoc";
     
-    // Check if we need to add divider
     if (lastWasNonAdhoc === false && isAdhoc && needsDivider) {
       const divider = document.createElement("div");
       divider.className = "section-divider";
@@ -786,7 +782,6 @@ function render() {
     card.dataset.siteId = site.id;
 
     const dotClass = d.status==="ok" ? "green" : d.status==="dueSoon" ? "amber" : d.status==="overdue" ? "red" : "";
-    const intervalMin = site.intervalMin ?? state.settings.defaultInterval;
     const isExpanded = expandedMetrics.has(site.id);
     const hasTimer = !!timers[site.id];
     const timerDisplay = formatTimerDisplay(site.id);
@@ -804,13 +799,8 @@ function render() {
         ${headerBadges}
       </h3>
       ${!isAdhoc ? `
-        <div class="row" style="gap:6px; flex-wrap:wrap;">
-          <span class="badge"><span class="status-dot ${dotClass}"></span>${d.status==="never"?"Never scanned":d.status==="overdue"?"Overdue":d.status==="dueSoon"?"Due soon":"OK"}</span>
-          <span class="badge">Interval: ${intervalMin}m</span>
-          <span class="badge">Last: ${d.last? new Date(d.last).toLocaleTimeString() : "—"}</span>
-          <span class="badge">Next due: ${d.last? new Date(d.dueAt).toLocaleTimeString() : "—"}</span>
-        </div>
-        <div class="kpis">
+        <span class="badge status"><span class="status-dot ${dotClass}"></span>${d.status==="never"?"Never scanned":d.status==="overdue"?"Overdue":d.status==="dueSoon"?"Due soon":"OK"}</span>
+        <div class="kpis" style="margin-top: 8px;">
           <div class="kpi"><div class="label">Time since last</div><div class="value">${timeAgo(d.last)}</div></div>
           <div class="kpi"><div class="label">Time remaining</div><div class="value" data-kpi="remaining">${d.last? fmtMinSec(d.dueAt - Date.now()) : "—"}</div></div>
         </div>
@@ -824,17 +814,16 @@ function render() {
         <button class="btn md success" data-act="scan" data-id="${site.id}">Scan Now</button>
       </div>
       <div class="site-actions-secondary">
-        <button class="btn sm" data-act="details" data-id="${site.id}">Details</button>
         <button class="btn sm" data-act="edit" data-id="${site.id}">Edit</button>
         <button class="btn timer sm" data-act="timer" data-id="${site.id}">${hasTimer ? 'Cancel ⏱️' : '⏱️'}</button>
         <button class="btn danger sm" data-act="delete" data-id="${site.id}">Delete</button>
       </div>
-      <button class="toggle-btn ${isExpanded ? 'open' : ''}" data-toggle-id="${site.id}">
-        <span class="caret">▼</span>
-        Metrics & Guidance
-      </button>
-      <div class="metrics-content ${isExpanded ? 'open' : ''}" data-metrics-id="${site.id}">
-        ${site.metrics?.length ? `
+      ${site.metrics?.length ? `
+        <button class="toggle-btn ${isExpanded ? 'open' : ''}" data-toggle-id="${site.id}">
+          <span class="caret">▼</span>
+          Metrics & Guidance
+        </button>
+        <div class="metrics-content ${isExpanded ? 'open' : ''}" data-metrics-id="${site.id}">
           <table class="table small">
             <thead><tr><th>Metric</th><th>Baseline</th><th>Unit</th><th>Guidance</th></tr></thead>
             <tbody>
@@ -842,9 +831,9 @@ function render() {
                 <tr><td>${m.name||""}</td><td>${m.baseline??""}</td><td>${m.unit||""}</td><td>${m.guide||""}</td></tr>
               `).join("")}
             </tbody>
-          </table>` : `<div class="muted small">No metrics defined yet.</div>`
-        }
-      </div>
+          </table>
+        </div>
+      ` : ''}
     `;
     grid.appendChild(card);
   }
@@ -891,7 +880,6 @@ function render() {
   });
   logFilterSite.value = currentVal;
 
-  // Update NERC select
   const nercSelect = document.getElementById("nercSelect");
   const nercCurrentVal = nercSelect.value;
   nercSelect.innerHTML = '<option value="">-- Select a site --</option>';
@@ -905,7 +893,6 @@ function render() {
   });
   nercSelect.value = nercCurrentVal;
 
-  // Update NERC list display
   const nercList = document.getElementById("nercList");
   nercList.innerHTML = "";
   nercSites.forEach(siteId => {
@@ -928,7 +915,6 @@ function render() {
     if (act==="scan") btn.onclick = ()=> openScanModal(sid);
     if (act==="edit") btn.onclick = ()=> openSiteModal(sid);
     if (act==="delete") btn.onclick = ()=> deleteSite(sid);
-    if (act==="details") btn.onclick = ()=> alertSiteDetails(sid);
     if (act==="timer") btn.onclick = ()=> {
       if (timers[sid]) cancelTimer(sid);
       else openTimerModal(sid);
@@ -961,17 +947,6 @@ function toggleMetrics(siteId, btn) {
     btn.classList.add('open');
     document.querySelector(`[data-metrics-id="${siteId}"]`).classList.add('open');
   }
-}
-
-function alertSiteDetails(siteId) {
-  const site = state.sites.find(s=>s.id===siteId);
-  const last = lastScan(siteId);
-  const d = computeStatus(site);
-  const intervalMin = site.intervalMin ?? state.settings.defaultInterval;
-  const intervalText = (site.intervalMin === null || site.intervalMin === 0 || site.intervalMin === "") ? "Ad-hoc (no cadence)" : `${intervalMin} minutes`;
-  const metrics = (site.metrics||[]).map(m => `- ${m.name} — baseline ${m.baseline ?? ""} ${m.unit || ""}${m.guide? " ("+m.guide+")":""}`).join("\n");
-  const msg = `${site.name}\nInterval: ${intervalText}\nLast scan: ${last? new Date(last).toLocaleString() : "Never"}\nTotal scans: ${state.logs.filter(l => l.siteId === siteId).length}\n\nMetrics:\n${metrics || "(none)"}`;
-  alert(msg);
 }
 
 /* ===== LOGS VIEW ===== */
@@ -1451,7 +1426,6 @@ document.getElementById("timerSave").onclick = ()=>{
   startTimer(siteId, site.name, minutes, note);
 };
 
-/* Seed example sites on first load */
 if (state.sites.length === 0) {
   state.sites.push(
     { id:id(), name:"Site A", intervalMin:30, metrics:[
