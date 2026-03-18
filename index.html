@@ -59,10 +59,41 @@
     padding: 8px 10px; border-radius: 10px; outline: none; width: 100%;
   }
   input[type="checkbox"] { transform: scale(1.3); cursor: pointer; }
+  
+  /* Grid modes */
   .grid {
     display: grid; gap: 12px; margin-top: 12px;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
+  
+  .grid.list-mode {
+    grid-template-columns: 1fr;
+  }
+  
+  .card.list-mode {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+  }
+  
+  .card.list-mode h3 {
+    margin: 0; font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  
+  .card.list-mode .kpis {
+    display: flex; gap: 8px; margin-top: 0;
+  }
+  
+  .card.list-mode .kpi {
+    background: #0b1220; border: 1px solid #1f2937; border-radius: 8px; 
+    padding: 4px 8px; font-size: 11px;
+  }
+  
+  .card.list-mode .site-actions { margin-top: 0; }
+  .card.list-mode .site-actions-secondary { margin-top: 0; }
+  
   .section-divider {
     grid-column: 1 / -1;
     height: 2px;
@@ -190,6 +221,9 @@
   .interval-input-wrapper input[type="number"] {
     width: 80px;
   }
+  .view-toggle {
+    display: flex; gap: 4px; align-items: center;
+  }
 </style>
 </head>
 <body>
@@ -216,7 +250,6 @@
         <option value="dueSoon">Due soon</option>
         <option value="overdue">Overdue</option>
         <option value="ok">OK (scanned recently)</option>
-        <option value="never">Never scanned</option>
       </select>
       <span class="spacer"></span>
       <button class="btn primary sm" id="btnAdd">Add Site</button>
@@ -225,11 +258,10 @@
       <button class="btn success" id="btnScanAll">Scan All NERC</button>
       <button class="btn warn sm" id="btnResetShift">Reset Shift Logs</button>
       <button class="btn sm" id="btnLogs">📊 Logs</button>
-    </div>
-    <div class="row" style="margin-top:8px;">
-      <div class="pill small">Default interval: <input id="defaultInterval" type="number" min="5" step="5" style="width:80px;margin-left:6px" /> min</div>
-      <div class="pill small">Due soon threshold: <input id="dueSoon" type="number" min="1" step="1" style="width:80px;margin-left:6px" /> min</div>
-      <div class="pill small">Timezone: <span id="tzLabel"></span></div>
+      <div class="view-toggle">
+        <span class="muted small">View:</span>
+        <button class="btn sm" id="btnToggleView" title="Toggle between grid and list view">List ⇄ Grid</button>
+      </div>
     </div>
   </div>
 </header>
@@ -240,8 +272,6 @@
       <div class="pill small"><span class="status-dot green"></span><span id="countOK">0</span> OK</div>
       <div class="pill small"><span class="status-dot amber"></span><span id="countSoon">0</span> Due soon</div>
       <div class="pill small"><span class="status-dot red"></span><span id="countLate">0</span> Overdue</div>
-      <div class="pill small"><span id="countNever">0</span> Never scanned</div>
-      <div class="pill small"><span id="countAdhoc">0</span> Ad-hoc</div>
       <div class="spacer"></div>
       <div class="pill small"><span id="totalSites">0</span> Sites</div>
     </div>
@@ -459,6 +489,7 @@ const LS_KEY = "scanTracker.v1";
 const SYNC_KEY = "scanTracker.syncConfig";
 const USER_KEY = "scanTracker.currentUser";
 const NERC_KEY = "scanTracker.nercSites";
+const VIEW_MODE_KEY = "scanTracker.viewMode";
 const DEFAULTS = {
   settings: { defaultInterval: 30, dueSoonMin: 5, sound: true },
   sites: [],
@@ -472,6 +503,7 @@ let nercSites = JSON.parse(localStorage.getItem(NERC_KEY) || "[]");
 let syncInterval = null;
 let timers = {};
 let timerIntervals = {};
+let viewMode = localStorage.getItem(VIEW_MODE_KEY) || "grid"; // "grid" or "list"
 
 /* ===== UTILITIES ===== */
 function loadState() {
@@ -495,6 +527,10 @@ function saveState() {
 
 function saveNercSites() {
   localStorage.setItem(NERC_KEY, JSON.stringify(nercSites));
+}
+
+function saveViewMode() {
+  localStorage.setItem(VIEW_MODE_KEY, viewMode);
 }
 
 function syncToGist() {
@@ -778,15 +814,12 @@ function updateDisplay() {
 
 function render() {
   document.getElementById("currentUser").textContent = currentUser || "No User";
-  document.getElementById("tzLabel").textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  document.getElementById("defaultInterval").value = state.settings.defaultInterval;
-  document.getElementById("dueSoon").value = state.settings.dueSoonMin;
   document.getElementById("btnSound").textContent = `Sound: ${state.settings.sound ? "On" : "Off"}`;
 
   const q = document.getElementById("search").value.toLowerCase().trim();
   const filter = document.getElementById("filter").value;
 
-  let countOK=0, countSoon=0, countLate=0, countNever=0, countAdhoc=0;
+  let countOK=0, countSoon=0, countLate=0;
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
 
@@ -804,8 +837,6 @@ function render() {
       if (d.status === "ok") countOK++;
       if (d.status === "dueSoon") countSoon++;
       if (d.status === "overdue") countLate++;
-      if (d.status === "never") countNever++;
-      if (d.status === "adhoc") countAdhoc++;
 
       const match = site.name.toLowerCase().includes(q);
       let pass = (filter==="all");
@@ -813,8 +844,7 @@ function render() {
       if (filter !== "all" && d.status !== "adhoc") {
         pass = (filter==="ok" && d.status==="ok")
           || (filter==="dueSoon" && d.status==="dueSoon")
-          || (filter==="overdue" && d.status==="overdue")
-          || (filter==="never" && d.status==="never");
+          || (filter==="overdue" && d.status==="overdue");
       }
       
       if (!match || !pass) continue;
@@ -829,6 +859,7 @@ function render() {
 
       const card = document.createElement("div");
       card.className = "card";
+      if (viewMode === "list") card.classList.add("list-mode");
       card.dataset.siteId = site.id;
 
       const dotClass = d.status==="ok" ? "green" : d.status==="dueSoon" ? "amber" : d.status==="overdue" ? "red" : "";
@@ -930,8 +961,6 @@ function render() {
   document.getElementById("countOK").textContent = countOK;
   document.getElementById("countSoon").textContent = countSoon;
   document.getElementById("countLate").textContent = countLate;
-  document.getElementById("countNever").textContent = countNever;
-  document.getElementById("countAdhoc").textContent = countAdhoc;
   document.getElementById("totalSites").textContent = state.sites.length;
 
   const logFilterSite = document.getElementById("logFilterSite");
@@ -1317,7 +1346,7 @@ function exportLogsCSV() {
   });
   const csv = rows.map(r=>r.map(v=>{
     const s = String(v??"");
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+    return /[\",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
   }).join(",")).join("\n");
   const blob = new Blob([csv], {type: "text/csv"});
   const a = document.createElement("a");
@@ -1533,6 +1562,13 @@ document.getElementById("timerSave").onclick = ()=>{
   const note = document.getElementById("timerNote").value.trim();
   document.getElementById("timerModal").style.display = "none";
   startTimer(siteId, site.name, minutes, note);
+};
+
+/* View mode toggle */
+document.getElementById("btnToggleView").onclick = ()=>{
+  viewMode = viewMode === "grid" ? "list" : "grid";
+  saveViewMode();
+  render();
 };
 
 if (state.sites.length === 0) {
