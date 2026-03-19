@@ -112,7 +112,7 @@
     display: inline-block; font-size: 10px; color: var(--text);
     background: var(--badge); padding: 2px 6px; border-radius: 999px; border: 1px solid #374151;
   }
-  .badge.status { font-size: 11px; font-weight: 600; padding: 3px 8px; margin-top: 6px; }
+  .badge.status { font-size: 10.5px; font-weight: 600; padding: 2px 7px; margin-top: 6px; } /* slightly shorter */
   .badge.nerc { background: rgba(6, 182, 212, 0.2); border-color: var(--nerc); color: #67e8f9; font-weight: 600; }
   .badge.timer-active { background: rgba(167, 139, 250, 0.3); border-color: var(--purple); color: #e9d5ff; animation: pulse 2s infinite; }
   .badge.adhoc { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #e9d5ff; font-size: 10px; }
@@ -123,10 +123,11 @@
   .red { background: var(--danger); }
 
   .site-actions-secondary { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+
   .kpis { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 6px; }
-  .kpi { background: #0b1220; border: 1px solid #1f2937; border-radius: 10px; padding: 6px; }
+  .kpi { background: #0b1220; border: 1px solid #1f2937; border-radius: 10px; padding: 5px; } /* slightly tighter */
   .kpi .label { font-size: 10px; color: var(--muted); }
-  .kpi .value { font-size: 13px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .kpi .value { font-size: 13px; font-weight: 600; margin-top: 1px; font-variant-numeric: tabular-nums; }
 
   footer { color: var(--muted); font-size: 12px; margin-top: 16px; text-align:center; padding-bottom: 20px; }
   .section { background: rgba(17,24,39,0.4); border: 1px solid #1f2937; border-radius: 16px; padding: 12px; margin-top: 12px; }
@@ -136,7 +137,7 @@
     grid-column: 1 / -1;
     height: 2px;
     background: linear-gradient(to right, transparent, rgba(6, 182, 212, 0.6) 20%, rgba(6, 182, 212, 0.6) 80%, transparent);
-    margin: 16px 0;
+    margin: 16px 0 8px 0;
     box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
   }
 
@@ -197,7 +198,7 @@
   body.compact .card { padding: 8px; border-radius: 10px; }
   body.compact .card h3 { font-size: 13px; gap: 4px; }
   body.compact .badge { font-size: 9.5px; padding: 2px 5px; }
-  body.compact .badge.status { font-size: 10.5px; padding: 2px 6px; margin-top: 4px; }
+  body.compact .badge.status { font-size: 10px; padding: 2px 6px; margin-top: 4px; }
   body.compact .kpis { grid-template-columns: 1fr; gap: 4px; margin-top: 4px; }
   body.compact .kpi { padding: 4px; border-radius: 8px; }
   body.compact .kpi .label { font-size: 9.5px; }
@@ -210,6 +211,9 @@
   body.compact .pill { padding: 3px 6px; font-size: 10.5px; }
   body.compact header .wrap .row { gap: 6px; }
   body.compact header h1 { font-size: 20px; }
+
+  /* Make only pills inside tiles a bit shorter without affecting header pills */
+  .card .pill { padding: 3px 6px; font-size: 10.5px; }
 </style>
 </head>
 <body>
@@ -259,7 +263,7 @@
       <div class="pill small"><span id="totalSites">0</span> Sites</div>
     </div>
 
-    <!-- NEW: Tabs -->
+    <!-- Tabs -->
     <div class="tabbar" role="tablist" aria-label="Site Views">
       <button class="tab" role="tab" id="tab-nerc"    data-tab="nerc"    aria-selected="true">NERC Sites</button>
       <button class="tab" role="tab" id="tab-nonnerc" data-tab="nonnerc" aria-selected="false">Non‑NERC</button>
@@ -272,7 +276,7 @@
       <div id="timersList" class="grid"></div>
     </div>
 
-    <!-- Tiles -->
+    <!-- Tiles Grid -->
     <div id="grid" class="grid" aria-live="polite"></div>
   </div>
 
@@ -862,7 +866,7 @@ function render() {
 
   const { sortedNercCadenced, sortedNonNercCadenced, sortedNercAdhoc, sortedNonNercAdhoc } = getSortedSites();
 
-  const addSiteCard = (site, groupNameIfNeeded=null) => {
+  const addSiteCard = (site) => {
     const d = computeStatus(site);
     if (d.status === "ok") countOK++;
     if (d.status === "dueSoon") countSoon++;
@@ -942,13 +946,20 @@ function render() {
 
   // Tab-aware rendering
   if (currentTab === "nerc") {
-    // Show NERC Cadenced first, then NERC Adhoc (headers optional; we’ll keep it clean w/o headers)
-    [...sortedNercCadenced, ...sortedNercAdhoc].forEach(s => addSiteCard(s));
+    // NERC scheduled (cadenced) first
+    [...sortedNercCadenced].forEach(s => addSiteCard(s));
+    // Blue divider + NERC adhoc (only if exists)
+    if (sortedNercAdhoc.length > 0) {
+      const divider = document.createElement("div");
+      divider.className = "section-divider";
+      grid.appendChild(divider);
+      sortedNercAdhoc.forEach(s => addSiteCard(s));
+    }
   } else if (currentTab === "nonnerc") {
-    // Show Non-NERC Cadenced first, then Non-NERC Adhoc
+    // No divider on this tab
     [...sortedNonNercCadenced, ...sortedNonNercAdhoc].forEach(s => addSiteCard(s));
   } else {
-    // "all" keeps previous grouped headers
+    // All: grouped headers (unchanged)
     if (sortedNercCadenced.length || sortedNercAdhoc.length) {
       const header = document.createElement("div");
       header.className = "section-header";
@@ -989,7 +1000,7 @@ function render() {
     timersSection.style.display = "none";
   }
 
-  // Stats (remain overall, not tab-filtered)
+  // Stats (overall)
   document.getElementById("countOK").textContent = countOK;
   document.getElementById("countSoon").textContent = countSoon;
   document.getElementById("countLate").textContent = countLate;
@@ -1322,7 +1333,7 @@ function scanAllNerc() {
   toast(`✓ Scanned all ${count} NERC sites`);
 }
 
-/* ===== TIMER MODAL (from tiles) ===== */
+/* ===== TIMER MODAL ===== */
 function openTimerModal(siteId) {
   const site = state.sites.find(s=>s.id===siteId);
   document.getElementById("timerSiteName").value = site.name;
@@ -1493,7 +1504,7 @@ document.getElementById("btnBackLogs").onclick = ()=>{
 document.getElementById("btnApplyLogFilter").onclick = renderLogs;
 document.getElementById("btnExportLogs").onclick = exportLogsCSV;
 
-/* Former header controls now in Settings */
+/* Export/Import/Summary/Notify */
 document.getElementById("btnExport").onclick = exportJSON;
 document.getElementById("importFile").onchange = e => { const file = e.target.files[0]; if (file) importJSONFile(file); e.target.value = ""; };
 document.getElementById("btnSummary").onclick = ()=>{
@@ -1516,9 +1527,17 @@ document.getElementById("filter").onchange = render;
 document.getElementById("defaultInterval").onchange = e=>{ state.settings.defaultInterval = Math.max(1, Number(e.target.value)||30); saveState(); syncToGist(); render(); };
 document.getElementById("dueSoon").onchange = e=>{ state.settings.dueSoonMin = Math.max(1, Number(e.target.value)||5); saveState(); syncToGist(); render(); };
 
-/* Compact toggle in Settings */
-const compactStored = localStorage.getItem(COMPACT_KEY) === "1";
-if (compactStored) { document.body.classList.add("compact"); const btn = document.getElementById("btnCompact"); if (btn) btn.textContent = "Compact: On"; }
+/* Compact toggle — DEFAULT TO ON if not set */
+const compactStored = localStorage.getItem(COMPACT_KEY);
+if (compactStored === null) {
+  document.body.classList.add("compact");
+  localStorage.setItem(COMPACT_KEY, "1");
+  const btn = document.getElementById("btnCompact"); if (btn) btn.textContent = "Compact: On";
+} else {
+  const enabled = compactStored === "1";
+  if (enabled) document.body.classList.add("compact");
+  const btn = document.getElementById("btnCompact"); if (btn) btn.textContent = `Compact: ${enabled ? "On" : "Off"}`;
+}
 document.getElementById("btnCompact").onclick = () => {
   const enabled = document.body.classList.toggle("compact");
   localStorage.setItem(COMPACT_KEY, enabled ? "1" : "0");
@@ -1584,7 +1603,7 @@ document.getElementById("timerSave").onclick = ()=>{
   startTimer(siteId, site.name, minutes, note);
 };
 
-/* Tabs wiring */
+/* Tabs */
 function setTab(tab) {
   currentTab = tab;
   saveTab();
