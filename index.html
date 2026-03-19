@@ -64,12 +64,12 @@
   }
   input[type="checkbox"] { transform: scale(1.3); cursor: pointer; }
 
-  /* ===== Tabs (Excel-like) ===== */
+  /* ===== Tabs ===== */
   .tabbar {
     display: flex;
     gap: 6px;
     align-items: flex-end;
-    margin: 8px 0 2px 0; /* slightly reduced */
+    margin: 8px 0 2px 0;
     border-top: 1px solid #1f2937;
     padding-top: 10px;
   }
@@ -83,7 +83,7 @@
     border-bottom: none;
     cursor: pointer;
     font-size: 11px;
-    transform: translateY(2px) scale(0.95); /* slightly smaller inactive */
+    transform: translateY(2px) scale(0.95);
     opacity: 0.75;
     transition: all .12s ease;
   }
@@ -98,12 +98,15 @@
 
   /* ===== Cards / tiles ===== */
   .grid {
-    display: grid; gap: 10px; margin-top: 12px;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* wider min to avoid pill “tall” look */
+    column-gap: 12px;  /* more horizontal air */
+    row-gap: 16px;     /* more vertical air between rows */
+    margin-top: 12px;
   }
   .card {
     background: linear-gradient(180deg, #0b1220, #0b1320);
-    border: 1px solid #172036; /* softer border */
+    border: 1px solid #172036;        /* softer border */
     border-radius: 12px; padding: 10px; position: relative;
     box-shadow: 0 3px 8px rgba(0,0,0,0.22); /* lighter shadow */
   }
@@ -113,20 +116,11 @@
     display: inline-block; font-size: 10px; color: var(--text);
     background: var(--badge); padding: 2px 6px; border-radius: 999px; border: 1px solid #374151;
   }
-  /* De-busy: slimmer status badge */
-  .badge.status { 
-    font-size: 9.5px;
-    padding: 1px 6px;
-    margin-top: 6px;
-    border-radius: 7px;
-    letter-spacing: 0.1px;
-  }
-  .badge.nerc, .badge.adhoc, .badge.timer-active {
-    padding: 1px 6px; font-size: 9.5px; border-radius: 7px;
-  }
+  .badge.status { font-size: 9.5px; padding: 1px 6px; margin-top: 6px; border-radius: 7px; letter-spacing: 0.1px; }
+  .badge.nerc, .badge.adhoc, .badge.timer-active { padding: 1px 6px; font-size: 9.5px; border-radius: 7px; }
   .badge.nerc { background: rgba(6, 182, 212, 0.2); border-color: var(--nerc); color: #67e8f9; font-weight: 600; }
   .badge.timer-active { background: rgba(167, 139, 250, 0.3); border-color: var(--purple); color: #e9d5ff; animation: pulse 2s infinite; }
-  .badge.adhoc { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #e9d5ff; font-size: 9.5px; }
+  .badge.adhoc { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #e9d5ff; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
   .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; box-shadow: 0 0 0 2px rgba(0,0,0,0.2) inset; }
@@ -135,12 +129,7 @@
   .red { background: var(--danger); }
 
   /* De-busy: tighter tile pills only */
-  .card .pill { 
-    padding: 2px 6px; 
-    font-size: 10px; 
-    border-radius: 8px; 
-    border-color: #2b3342;
-  }
+  .card .pill { padding: 2px 6px; font-size: 10px; border-radius: 8px; border-color: #2b3342; }
 
   .site-actions-secondary { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
   .site-actions-secondary .btn.sm { padding: 3px 6px; font-size: 10.5px; border-radius: 8px; }
@@ -150,7 +139,6 @@
   .kpi .label { font-size: 9.5px; color: var(--muted); opacity: 0.9; margin-bottom: 0; }
   .kpi .value { font-size: 12.5px; font-weight: 600; margin-top: 0; font-variant-numeric: tabular-nums; }
 
-  /* Subtle separator between status and KPIs to declutter */
   .card .badge.status + .kpis::before {
     content: ""; display: block; height: 1px;
     background: linear-gradient(to right, transparent, #1a2230, transparent);
@@ -224,7 +212,7 @@
   .nerc-item button { padding: 2px 4px; font-size: 10px; }
 
   /* Compact Mode profile */
-  body.compact .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+  body.compact .grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); column-gap: 10px; row-gap: 14px; }
   body.compact .card { padding: 8px; border-radius: 10px; }
   body.compact .card h3 { font-size: 13px; gap: 4px; }
   body.compact .badge { font-size: 9.5px; padding: 2px 5px; }
@@ -1222,7 +1210,7 @@ function openSiteModal(siteId=null) {
 
     for (const m of (site.metrics||[])) addMetricRow(m.name, m.baseline, m.unit, m.guide);
   } else {
-    addMetricRow("Voltage", "", "V", "Expected operating band");
+    // No default seed; keeps empty to avoid diverging shared tiles
   }
 
   document.getElementById("siteModal").style.display = "flex";
@@ -1651,22 +1639,39 @@ document.querySelector(".tabbar").addEventListener("keydown", (e)=>{
   }
 });
 
-/* Seed example sites on first load */
-if (state.sites.length === 0) {
-  state.sites.push(
-    { id:id(), name:"Site A", intervalMin:30, metrics:[
-      {name:"Voltage", baseline:"13.2", unit:"kV", guide:"±0.5 kV"},
-      {name:"Inverter Status", baseline:"RUN", unit:"", guide:"RUN / ENABLED"}
-    ]},
-    { id:id(), name:"Site B", intervalMin:30, metrics:[
-      {name:"SOC", baseline:"70", unit:"%", guide:"Keep > 25%"},
-      {name:"Power", baseline:"0", unit:"MW", guide:"Idle unless dispatched"}
-    ]}
-  );
-  saveState();
-}
+/* ===== FIRST-RUN SHARED SYNC HANDOFF ===== */
+/* Goal: If a new user (new profile/IP) opens with no tiles, automatically load the shared tiles.
+   - Accept Gist ID via URL ?gist= or #gist=
+   - Else if a gist is already stored, sync immediately
+   - Else auto-open Setup Sync modal so they can enter the team Gist ID
+*/
+(function bootstrapShared() {
+  // Parse URL gist (query or hash)
+  const url = new URL(window.location.href);
+  const queryGist = url.searchParams.get("gist");
+  const hashGist = (window.location.hash || "").replace(/^#/, "").split("&").map(p=>p.split("=")).find(kv=>kv[0]==="gist")?.[1];
 
-/* Initial prompts & loops */
+  const incomingGist = (queryGist || hashGist || "").trim();
+
+  if (incomingGist) {
+    syncConfig = { gistId: incomingGist, autoSync: true };
+    localStorage.setItem(SYNC_KEY, JSON.stringify(syncConfig));
+    document.getElementById("syncStatus").textContent = "🔗 Connecting…";
+    startSync();
+    toast("Connecting to shared tiles…");
+  } else if (syncConfig.gistId) {
+    // Already configured — just ensure sync starts
+    startSync();
+  } else {
+    // No gist configured: if there are no sites locally, prompt to set up sync
+    if ((state.sites || []).length === 0) {
+      setTimeout(()=>{ document.getElementById("setupSyncModal").style.display = "flex"; }, 250);
+      toast("No sites yet — enter your team’s Gist ID to load shared tiles.");
+    }
+  }
+})();
+
+/* ===== Initial prompts & loops ===== */
 function showUserModal(){ document.getElementById("userModal").style.display = "flex"; }
 if (!currentUser) { document.getElementById("userName").value = ""; document.getElementById("userModal").style.display = "flex"; }
 setInterval(updateDisplay, 1000);
