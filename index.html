@@ -80,7 +80,7 @@
   }
   .badge.status { font-size: 11px; font-weight: 600; padding: 3px 8px; margin-top: 6px; }
   .badge.nerc { background: rgba(6, 182, 212, 0.2); border-color: var(--nerc); color: #67e8f9; font-weight: 600; }
-  .badge.timer-active { background: rgba(167, 139, 250, 0.3); border-color: #9333ea; color: #e9d5ff; animation: pulse 2s infinite; }
+  .badge.timer-active { background: rgba(167, 139, 250, 0.3); border-color: var(--purple); color: #e9d5ff; animation: pulse 2s infinite; }
   .badge.adhoc { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #e9d5ff; font-size: 10px; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
   .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; box-shadow: 0 0 0 2px rgba(0,0,0,0.2) inset; }
@@ -544,7 +544,75 @@ function loadState() {
 function saveState() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 function saveNercSites() { localStorage.setItem(NERC_KEY, JSON.stringify(nercSites)); }
 
-/* ===== Notifications & Sound ===== */
+function syncToGist() {
+  if (!syncConfig.gistId) return;
+  const data = { data: state, syncedAt: new Date().toISOString() };
+  fetch(`https://api.github.com/gists/${syncConfig.gistId}`, {
+    method: 'PATCH',
+    headers: { 'Accept': 'application/vnd.github.v3+json' },
+    body: JSON.stringify({
+      files: { 'scan-tracker-data.json': { content: JSON.stringify(data, null, 2) } }
+    })
+  }).then(r => {
+    if (r.ok) {
+      document.getElementById("syncStatus").textContent = "✓ Synced";
+      document.getElementById("syncStatus").style.background = "rgba(34,197,94,0.2)";
+      document.getElementById("syncStatus").style.color = "#86efac";
+      setTimeout(() => {
+        if (syncConfig.gistId) document.getElementById("syncStatus").textContent = "🔄 Synced";
+      }, 2000);
+    }
+  }).catch(err => console.log("Sync error:", err));
+}
+function syncFromGist() {
+  if (!syncConfig.gistId) return;
+  fetch(`https://api.github.com/gists/${syncConfig.gistId}`, {
+    headers: { 'Accept': 'application/vnd.github.v3+json' }
+  })
+  .then(r => r.json())
+  .then(gist => {
+    if (gist.files && gist.files['scan-tracker-data.json']) {
+      const content = gist.files['scan-tracker-data.json'].content;
+      const data = JSON.parse(content).data || {};
+      if (data.sites && data.settings) {
+        state = data;
+        saveState();
+        render();
+      }
+    }
+  })
+  .catch(err => console.log("Fetch error:", err));
+}
+function startSync() {
+  if (syncInterval) clearInterval(syncInterval);
+  if (!syncConfig.gistId) return;
+  syncFromGist();
+  if (syncConfig.autoSync) {
+    syncInterval = setInterval(() => { syncFromGist(); }, 30000);
+  }
+}
+
+function id() { return Math.random().toString(36).slice(2,9); }
+function fmtMinSec(ms) {
+  const s = Math.max(0, Math.floor(ms/1000));
+  const m = Math.floor(s/60), r = s%60;
+  return `${m}:${String(r).padStart(2,'0')}`;
+}
+function timeAgo(ts) {
+  if (!ts) return "—";
+  const s = Math.max(1, Math.floor((Date.now()-ts)/1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s/60); if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m/60); const rm = m % 60;
+  return `${h}h ${rm}m ago`;
+}
+function toast(msg, ms=2500) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.remove("hidden");
+  setTimeout(()=>el.classList.add("hidden"), ms);
+}
+
+/* ===== SOUND / NOTIFICATIONS ===== */
 let chime;
 function ensureChime() {
   if (!chime) {
@@ -563,19 +631,6 @@ function ensureChime() {
 }
 function notify(title, body) {
   try { if (Notification.permission === "granted") new Notification(title, { body }); } catch(e){}
-  if (state.settings.sound) { ensureChime(); chime(); }
-}
-
-/* === NEW: Distinct Quick Timer notifier (site + note) === */
-function notifyQuickTimer(siteName, note) {
-  const shortNote = (note && note.trim()) ? note.trim().slice(0, 80) : "Timer";
-  const title = `${siteName} — ${shortNote}`;
-  const body  = "Quick Timer";
-  try {
-    if (Notification.permission === "granted") {
-      new Notification(title, { body });
-    }
-  } catch (e) {}
   if (state.settings.sound) { ensureChime(); chime(); }
 }
 
@@ -598,26 +653,8 @@ function computeStatus(site) {
   }
   return { last, dueAt, remaining, status };
 }
-function fmtMinSec(ms) {
-  const s = Math.max(0, Math.floor(ms/1000));
-  const m = Math.floor(s/60), r = s%60;
-  return `${m}:${String(r).padStart(2,'0')}`;
-}
-function timeAgo(ts) {
-  if (!ts) return "—";
-  const s = Math.max(1, Math.floor((Date.now()-ts)/1000));
-  if (s < 60) return `${s}s ago`;
-  const m = Math.floor(s/60); if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m/60); const rm = m % 60;
-  return `${h}h ${rm}m ago`;
-}
-function toast(msg, ms=2500) {
-  const el = document.getElementById("toast");
-  el.textContent = msg; el.classList.remove("hidden");
-  setTimeout(()=>el.classList.add("hidden"), ms);
-}
 
-/* ===== TIMERS (hardened & distinct alert for Quick Timers) ===== */
+/* ===== TIMERS (hardened to force render) ===== */
 function startTimer(siteId, siteName, minutes, note) {
   const minNum = Math.max(1, Number(minutes) || 0);
   const key = siteId;
@@ -626,32 +663,30 @@ function startTimer(siteId, siteName, minutes, note) {
 
   if (timerIntervals[key]) clearInterval(timerIntervals[key]);
   timerIntervals[key] = setInterval(() => {
-    const t = timers[key];
-    const remaining = t ? (t.endTime - Date.now()) : 0;
-    if (!t || remaining <= 0) {
+    const remaining = timers[key]?.endTime - Date.now();
+    if (remaining <= 0) {
       clearInterval(timerIntervals[key]);
       delete timers[key];
       delete timerIntervals[key];
-
-      // Distinct audible/notification for Quick Timers:
-      notifyQuickTimer(siteName, note);
-
-      render();                 // full UI update
+      notify("⏱️ Timer Alert!", `Time to check ${siteName}!`);
+      render();                 // <- force full UI update
     } else {
-      updateDisplay();          // tick digits
+      updateDisplay();          // digits tick
     }
   }, 1000);
 
-  render();  // ensure timers list & badge show immediately
+  render();  // <- ensure timers section & card badges appear immediately
   toast(`Timer set for ${siteName}: ${minNum}m`);
 }
+
 function cancelTimer(siteId) {
   if (timerIntervals[siteId]) clearInterval(timerIntervals[siteId]);
   delete timers[siteId];
   delete timerIntervals[siteId];
-  render();
+  render();  // <- ensure badges & timers list update immediately
   toast("Timer cancelled");
 }
+
 function formatTimerDisplay(siteId) {
   if (!timers[siteId]) return "";
   const remaining = timers[siteId].endTime - Date.now();
@@ -664,6 +699,7 @@ function formatTimerDisplay(siteId) {
 /* ===== SORTING ===== */
 function getSortedSites() {
   const sites = [...state.sites];
+
   const cadencedSites = sites.filter(s => {
     const interval = s.intervalMin;
     return interval !== null && interval !== 0 && interval !== "";
@@ -672,38 +708,45 @@ function getSortedSites() {
     const interval = s.intervalMin;
     return interval === null || interval === 0 || interval === "";
   });
+
   const nercCadenced = cadencedSites.filter(s => nercSites.includes(s.id));
   const nonNercCadenced = cadencedSites.filter(s => !nercSites.includes(s.id));
+
   const sortSiteGroup = (group) => {
     return group.sort((a, b) => {
-      const A = computeStatus(a), B = computeStatus(b);
-      if (A.status === "overdue" && B.status !== "overdue") return -1;
-      if (A.status !== "overdue" && B.status === "overdue") return 1;
-      if (A.status === "overdue" && B.status === "overdue") return A.remaining - B.remaining;
-      if (A.status === "dueSoon" && B.status !== "dueSoon") return -1;
-      if (A.status !== "dueSoon" && B.status === "dueSoon") return 1;
-      if (A.status === "dueSoon" && B.status === "dueSoon") return A.remaining - B.remaining;
-      if (A.status === "never" && B.status !== "never") return -1;
-      if (A.status !== "never" && B.status === "never") return 1;
+      const statusA = computeStatus(a);
+      const statusB = computeStatus(b);
+      if (statusA.status === "overdue" && statusB.status !== "overdue") return -1;
+      if (statusA.status !== "overdue" && statusB.status === "overdue") return 1;
+      if (statusA.status === "overdue" && statusB.status === "overdue") return statusA.remaining - statusB.remaining;
+      if (statusA.status === "dueSoon" && statusB.status !== "dueSoon") return -1;
+      if (statusA.status !== "dueSoon" && statusB.status === "dueSoon") return 1;
+      if (statusA.status === "dueSoon" && statusB.status === "dueSoon") return statusA.remaining - statusB.remaining;
+      if (statusA.status === "never" && statusB.status !== "never") return -1;
+      if (statusA.status !== "never" && statusB.status === "never") return 1;
       return a.name.localeCompare(b.name);
     });
   };
-  return {
-    sortedNercCadenced: sortSiteGroup(nercCadenced),
-    sortedNonNercCadenced: sortSiteGroup(nonNercCadenced),
-    sortedAdhoc: adhocSites.sort((a, b) => a.name.localeCompare(b.name))
-  };
+
+  const sortedNercCadenced = sortSiteGroup(nercCadenced);
+  const sortedNonNercCadenced = sortSiteGroup(nonNercCadenced);
+  const sortedAdhoc = adhocSites.sort((a, b) => a.name.localeCompare(b.name));
+
+  return { sortedNercCadenced, sortedNonNercCadenced, sortedAdhoc };
 }
 
 /* ===== RENDER MAIN VIEW ===== */
 function updateDisplay() {
   const grid = document.getElementById("grid");
   const cards = grid.querySelectorAll(".card");
+
   cards.forEach(card => {
     const siteId = card.dataset.siteId;
     if (!siteId) return;
+
     const site = state.sites.find(s => s.id === siteId);
     if (!site) return;
+
     const d = computeStatus(site);
     const timerDisplay = formatTimerDisplay(siteId);
     const hasTimer = !!timers[siteId];
@@ -718,10 +761,12 @@ function updateDisplay() {
       remainingKpi.textContent = d.last ? fmtMinSec(d.dueAt - Date.now()) : "—";
     }
 
-    // tick in timers list
+    // Tick in timers list
     const timersList = document.getElementById("timersList");
     const timerCard = timersList.querySelector(`[data-timer-id="${siteId}"]`);
-    if (timerCard) timerCard.querySelector(".timer-display").textContent = timerDisplay;
+    if (timerCard) {
+      timerCard.querySelector(".timer-display").textContent = timerDisplay;
+    }
   });
 }
 
@@ -731,11 +776,15 @@ function render() {
   if (qtSite) {
     const prev = qtSite.value;
     qtSite.innerHTML = "";
-    state.sites.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(s => {
-      const opt = document.createElement("option");
-      opt.value = s.id; opt.textContent = s.name;
-      qtSite.appendChild(opt);
-    });
+    state.sites
+      .slice()
+      .sort((a,b)=>a.name.localeCompare(b.name))
+      .forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.id; opt.textContent = s.name;
+        qtSite.appendChild(opt);
+      });
+    // keep prior selection if possible
     if ([...qtSite.options].some(o => o.value === prev)) qtSite.value = prev;
   }
 
@@ -812,7 +861,7 @@ function render() {
         ${d.status !== "adhoc" ? `
           <span class="badge status"><span class="status-dot ${dotClass}"></span>${d.status==="never"?"Never scanned":d.status==="overdue"?"Overdue":d.status==="dueSoon"?"Due soon":"OK"}</span>
           <div class="kpis" style="margin-top: 6px;">
-            <!-- "Time since last" removed as requested -->
+            <!-- Removed "Time since last" KPI as requested -->
             <div class="kpi"><div class="label">Time remaining</div><div class="value" data-kpi="remaining">${d.last? fmtMinSec(d.dueAt - Date.now()) : "—"}</div></div>
           </div>
         ` : `
@@ -1297,8 +1346,6 @@ function buildHandoffSummary() {
 function tick() {
   const now = new Date();
   document.getElementById("clock").textContent = now.toLocaleString();
-
-  // Routine scan overdue notifications (unchanged)
   for (const s of state.sites) {
     const d = computeStatus(s);
     if (d.status === "overdue") {
