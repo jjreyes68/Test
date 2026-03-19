@@ -69,7 +69,7 @@
     display: flex;
     gap: 6px;
     align-items: flex-end;
-    margin: 10px 0 6px 0;
+    margin: 8px 0 2px 0; /* slightly reduced */
     border-top: 1px solid #1f2937;
     padding-top: 10px;
   }
@@ -83,7 +83,7 @@
     border-bottom: none;
     cursor: pointer;
     font-size: 11px;
-    transform: translateY(2px) scale(0.96);
+    transform: translateY(2px) scale(0.95); /* slightly smaller inactive */
     opacity: 0.75;
     transition: all .12s ease;
   }
@@ -103,31 +103,59 @@
   }
   .card {
     background: linear-gradient(180deg, #0b1220, #0b1320);
-    border: 1px solid #1f2937; border-radius: 12px; padding: 10px; position: relative;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.30);
+    border: 1px solid #172036; /* softer border */
+    border-radius: 12px; padding: 10px; position: relative;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.22); /* lighter shadow */
   }
-  .card h3 { margin: 0 0 4px 0; font-size: 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .card h3 { margin: 0 0 4px 0; font-size: 14px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 
   .badge {
     display: inline-block; font-size: 10px; color: var(--text);
     background: var(--badge); padding: 2px 6px; border-radius: 999px; border: 1px solid #374151;
   }
-  .badge.status { font-size: 10.5px; font-weight: 600; padding: 2px 7px; margin-top: 6px; } /* slightly shorter */
+  /* De-busy: slimmer status badge */
+  .badge.status { 
+    font-size: 9.5px;
+    padding: 1px 6px;
+    margin-top: 6px;
+    border-radius: 7px;
+    letter-spacing: 0.1px;
+  }
+  .badge.nerc, .badge.adhoc, .badge.timer-active {
+    padding: 1px 6px; font-size: 9.5px; border-radius: 7px;
+  }
   .badge.nerc { background: rgba(6, 182, 212, 0.2); border-color: var(--nerc); color: #67e8f9; font-weight: 600; }
   .badge.timer-active { background: rgba(167, 139, 250, 0.3); border-color: var(--purple); color: #e9d5ff; animation: pulse 2s infinite; }
-  .badge.adhoc { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #e9d5ff; font-size: 10px; }
+  .badge.adhoc { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #e9d5ff; font-size: 9.5px; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; box-shadow: 0 0 0 2px rgba(0,0,0,0.2) inset; }
+
+  .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; box-shadow: 0 0 0 2px rgba(0,0,0,0.2) inset; }
   .green { background: var(--accent); }
   .amber { background: var(--warn); }
   .red { background: var(--danger); }
 
-  .site-actions-secondary { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  /* De-busy: tighter tile pills only */
+  .card .pill { 
+    padding: 2px 6px; 
+    font-size: 10px; 
+    border-radius: 8px; 
+    border-color: #2b3342;
+  }
 
-  .kpis { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 6px; }
-  .kpi { background: #0b1220; border: 1px solid #1f2937; border-radius: 10px; padding: 5px; } /* slightly tighter */
-  .kpi .label { font-size: 10px; color: var(--muted); }
-  .kpi .value { font-size: 13px; font-weight: 600; margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .site-actions-secondary { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
+  .site-actions-secondary .btn.sm { padding: 3px 6px; font-size: 10.5px; border-radius: 8px; }
+
+  .kpis { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 6px; position: relative; }
+  .kpi { background: #0b1220; border: 1px solid #1a2230; border-radius: 10px; padding: 4px; }
+  .kpi .label { font-size: 9.5px; color: var(--muted); opacity: 0.9; margin-bottom: 0; }
+  .kpi .value { font-size: 12.5px; font-weight: 600; margin-top: 0; font-variant-numeric: tabular-nums; }
+
+  /* Subtle separator between status and KPIs to declutter */
+  .card .badge.status + .kpis::before {
+    content: ""; display: block; height: 1px;
+    background: linear-gradient(to right, transparent, #1a2230, transparent);
+    margin: 6px 0;
+  }
 
   footer { color: var(--muted); font-size: 12px; margin-top: 16px; text-align:center; padding-bottom: 20px; }
   .section { background: rgba(17,24,39,0.4); border: 1px solid #1f2937; border-radius: 16px; padding: 12px; margin-top: 12px; }
@@ -143,13 +171,15 @@
 
   .table { width:100%; border-collapse: collapse; }
   .table th, .table td { border-bottom: 1px dashed #1f2937; padding: 4px; text-align: left; font-size: 11px; }
+  .table.small th, .table.small td { font-size: 10px; } /* Shrink “Reference Points” table text slightly */
   .right-text { text-align: right; }
   .toast { position: fixed; right: 12px; bottom: 12px; background: #111827; border: 1px solid #374151; color: var(--text); padding: 10px 12px; border-radius: 10px; opacity: 0.95; z-index: 1000; }
   .hidden { display: none; }
 
   .toggle-btn {
     background: none; border: none; color: var(--muted); cursor: pointer; padding: 0;
-    font-size: 11px; display: flex; align-items: center; gap: 4px; margin-top: 6px;
+    font-size: 10px; /* shrunk slightly to reduce clutter */
+    display: flex; align-items: center; gap: 4px; margin-top: 6px;
   }
   .toggle-btn:hover { color: var(--text); }
   .toggle-btn .caret { display: inline-block; transition: transform 0.2s ease; }
@@ -211,9 +241,6 @@
   body.compact .pill { padding: 3px 6px; font-size: 10.5px; }
   body.compact header .wrap .row { gap: 6px; }
   body.compact header h1 { font-size: 20px; }
-
-  /* Make only pills inside tiles a bit shorter without affecting header pills */
-  .card .pill { padding: 3px 6px; font-size: 10.5px; }
 </style>
 </head>
 <body>
@@ -919,10 +946,10 @@ function render() {
         </div>
       `}
       <div class="site-actions-secondary">
-        <button class="btn md success" data-act="scan" data-id="${site.id}">Scan Now</button>
-        <button class="btn sm" data-act="edit" data-id="${site.id}">Edit</button>
-        <button class="btn timer sm" data-act="timer" data-id="${site.id}">${hasTimer ? 'Cancel ⏱️' : '⏱️'}</button>
-        <button class="btn danger sm" data-act="delete" data-id="${site.id}">Delete</button>
+        <button class="btn md success" data-act="scan" data-id="${site.id}" title="Scan now">Scan Now</button>
+        <button class="btn sm" data-act="edit" data-id="${site.id}" title="Edit">🖊</button>
+        <button class="btn timer sm" data-act="timer" data-id="${site.id}" title="Timer">${hasTimer ? 'Cancel ⏱️' : '⏱️'}</button>
+        <button class="btn danger sm" data-act="delete" data-id="${site.id}" title="Delete">🗑</button>
       </div>
       ${site.metrics?.length ? `
         <button class="toggle-btn ${isExpanded ? 'open' : ''}" data-toggle-id="${site.id}">
@@ -944,11 +971,9 @@ function render() {
     grid.appendChild(card);
   };
 
-  // Tab-aware rendering
+  // Tab-aware rendering (keep NERC divider only on NERC tab)
   if (currentTab === "nerc") {
-    // NERC scheduled (cadenced) first
     [...sortedNercCadenced].forEach(s => addSiteCard(s));
-    // Blue divider + NERC adhoc (only if exists)
     if (sortedNercAdhoc.length > 0) {
       const divider = document.createElement("div");
       divider.className = "section-divider";
@@ -956,10 +981,8 @@ function render() {
       sortedNercAdhoc.forEach(s => addSiteCard(s));
     }
   } else if (currentTab === "nonnerc") {
-    // No divider on this tab
     [...sortedNonNercCadenced, ...sortedNonNercAdhoc].forEach(s => addSiteCard(s));
   } else {
-    // All: grouped headers (unchanged)
     if (sortedNercCadenced.length || sortedNercAdhoc.length) {
       const header = document.createElement("div");
       header.className = "section-header";
