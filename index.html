@@ -57,6 +57,7 @@
   .btn.timer { background: var(--purple); border-color: #9333ea; color:#0b1320; }
   .btn.sm { padding: 4px 6px; font-size: 11px; }
   .btn.md { padding: 8px 12px; font-size: 13px; font-weight: 500; }
+  .btn[disabled] { opacity: .5; cursor: not-allowed; }
 
   input[type="text"], input[type="number"], input[type="date"], textarea, select {
     background: #0b1220; color: var(--text); border: 1px solid #374151;
@@ -64,7 +65,7 @@
   }
   input[type="checkbox"] { transform: scale(1.3); cursor: pointer; }
 
-  /* ===== Tabs (Excel-like) ===== */
+  /* ===== Tabs ===== */
   .tabbar {
     display: flex;
     gap: 6px;
@@ -113,18 +114,10 @@
     display: inline-block; font-size: 10px; color: var(--text);
     background: var(--badge); padding: 2px 6px; border-radius: 999px; border: 1px solid #374151;
   }
-  .badge.status { 
-    font-size: 9.5px;
-    padding: 1px 6px;
-    margin-top: 6px;
-    border-radius: 7px;
-    letter-spacing: 0.1px;
-  }
-  .badge.nerc, .badge.adhoc, .badge.timer-active {
-    padding: 1px 6px; font-size: 9.5px; border-radius: 7px;
-  }
+  .badge.status { font-size: 9.5px; padding: 1px 6px; margin-top: 6px; border-radius: 7px; letter-spacing: 0.1px; }
+  .badge.nerc, .badge.adhoc, .badge.timer-active { padding: 1px 6px; font-size: 9.5px; border-radius: 7px; }
   .badge.nerc { background: rgba(6, 182, 212, 0.2); border-color: var(--nerc); color: #67e8f9; font-weight: 600; }
-  .badge.timer-active { background: rgba(167, 139, 250, 0.3); border-color: var(--purple); color: #e9d5ff; animation: pulse 2s infinite; }
+  .badge.timer-active { background: rgba(167, 139, 250, 0.3); border-color: #9333ea; color: #e9d5ff; animation: pulse 2s infinite; }
   .badge.adhoc { background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #e9d5ff; font-size: 9.5px; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
@@ -133,13 +126,7 @@
   .amber { background: var(--warn); }
   .red { background: var(--danger); }
 
-  .card .pill { 
-    padding: 2px 6px; 
-    font-size: 10px; 
-    border-radius: 8px; 
-    border-color: #2b3342;
-  }
-
+  .card .pill { padding: 2px 6px; font-size: 10px; border-radius: 8px; border-color: #2b3342; }
   .site-actions-secondary { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 4px; }
   .site-actions-secondary .btn.sm { padding: 3px 6px; font-size: 10.5px; border-radius: 8px; }
 
@@ -147,24 +134,13 @@
   .kpi { background: #0b1220; border: 1px solid #1a2230; border-radius: 10px; padding: 4px; }
   .kpi .label { font-size: 9.5px; color: var(--muted); opacity: 0.9; margin-bottom: 0; }
   .kpi .value { font-size: 12.5px; font-weight: 600; margin-top: 0; font-variant-numeric: tabular-nums; }
-
-  .card .badge.status + .kpis::before {
-    content: ""; display: block; height: 1px;
-    background: linear-gradient(to right, transparent, #1a2230, transparent);
-    margin: 6px 0;
-  }
+  .card .badge.status + .kpis::before { content:""; display:block; height:1px; background: linear-gradient(to right, transparent, #1a2230, transparent); margin: 6px 0; }
 
   footer { color: var(--muted); font-size: 12px; margin-top: 16px; text-align:center; padding-bottom: 20px; }
   .section { background: rgba(17,24,39,0.4); border: 1px solid #1f2937; border-radius: 16px; padding: 12px; margin-top: 12px; }
   .section-header { grid-column: 1 / -1; padding: 12px 0 8px 0; border-top: 1px solid #1f2937; margin-top: 12px; }
   .section-header:first-child { border-top: none; margin-top: 0; }
-  .section-divider {
-    grid-column: 1 / -1;
-    height: 2px;
-    background: linear-gradient(to right, transparent, rgba(6, 182, 212, 0.6) 20%, rgba(6, 182, 212, 0.6) 80%, transparent);
-    margin: 16px 0 8px 0;
-    box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
-  }
+  .section-divider { grid-column: 1 / -1; height: 2px; background: linear-gradient(to right, transparent, rgba(6, 182, 212, 0.6) 20%, rgba(6, 182, 212, 0.6) 80%, transparent); margin: 16px 0 8px 0; box-shadow: 0 0 12px rgba(6, 182, 212, 0.3); }
 
   .table { width:100%; border-collapse: collapse; }
   .table th, .table td { border-bottom: 1px dashed #1f2937; padding: 4px; text-align: left; font-size: 11px; }
@@ -173,29 +149,21 @@
   .toast { position: fixed; right: 12px; bottom: 12px; background: #111827; border: 1px solid #374151; color: var(--text); padding: 10px 12px; border-radius: 10px; opacity: 0.95; z-index: 1000; }
   .hidden { display: none; }
 
-  .toggle-btn {
-    background: none; border: none; color: var(--muted); cursor: pointer; padding: 0;
-    font-size: 10px;
-    display: flex; align-items: center; gap: 4px; margin-top: 6px;
-  }
+  .toggle-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 0; font-size: 10px; display: flex; align-items: center; gap: 4px; margin-top: 6px; }
   .toggle-btn:hover { color: var(--text); }
   .toggle-btn .caret { display: inline-block; transition: transform 0.2s ease; }
   .toggle-btn.open .caret { transform: rotate(180deg); }
   .metrics-content { display: none; margin-top: 8px; }
   .metrics-content.open { display: block; }
 
-  .log-row {
-    background: rgba(31,41,55,0.5); border: 1px solid #1f2937; border-radius: 8px; padding: 10px; margin: 6px 0;
-    display: grid; grid-template-columns: 120px 100px 100px 120px 120px 1fr; gap: 10px; align-items: center; font-size: 12px;
-  }
+  .log-row { background: rgba(31,41,55,0.5); border: 1px solid #1f2937; border-radius: 8px; padding: 10px; margin: 6px 0;
+    display: grid; grid-template-columns: 120px 100px 100px 120px 120px 1fr; gap: 10px; align-items: center; font-size: 12px; }
   .log-badge { padding: 2px 6px; border-radius: 6px; font-size: 11px; text-align: center; }
   .log-on-time { background: rgba(34,197,94,0.2); color: #86efac; }
   .log-late { background: rgba(245,158,11,0.2); color: #fcd34d; }
   .log-very-late { background: rgba(239,68,68,0.2); color: #fca5a5; }
 
-  .modal-backdrop {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 100;
-  }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 100; }
   .modal { background: #0b1320; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; max-width: 640px; width: 96%; max-height: 90vh; overflow-y: auto; }
   .modal h3 { margin-top: 0; }
 
@@ -205,20 +173,6 @@
   .setup-modal code { background: #1f2937; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
   .setup-modal textarea { font-family: monospace; font-size: 12px; max-height: 200px; }
   .sync-status { font-size: 11px; padding: 4px 8px; border-radius: 4px; background: rgba(59,130,246,0.2); color: #93c5fd; }
-
-  .timer-card {
-    background: linear-gradient(180deg, #5b21b6, #3f0f6b);
-    border: 2px solid var(--purple); border-radius: 16px; padding: 10px; position: relative;
-    box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
-  }
-  .timer-display { font-size: 26px; font-weight: bold; color: var(--purple); text-align: center; margin: 8px 0; font-family: monospace; }
-  .timer-site-name { font-size: 13px; color: var(--text); text-align: center; margin-bottom: 10px; }
-  .timer-note { font-size: 10px; color: var(--muted); text-align: center; margin-bottom: 6px; max-height: 40px; overflow: hidden; }
-  .timer-actions { display: flex; gap: 8px; justify-content: center; }
-
-  .nerc-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-  .nerc-item { background: rgba(6, 182, 212, 0.1); border: 1px solid var(--nerc); padding: 6px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px; font-size: 12px; }
-  .nerc-item button { padding: 2px 4px; font-size: 10px; }
 
   /* Compact Mode profile */
   body.compact .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
@@ -252,7 +206,7 @@
       <span id="clock" class="pill small"></span>
     </div>
 
-    <!-- Row 2: Quick Timer + primary actions (ordered) + Settings -->
+    <!-- Row 2: Quick Timer + primary actions -->
     <div class="row" style="margin-top:8px;">
       <div class="pill small" style="display:flex; gap:6px; align-items:center;">
         ⏱️ Quick Timer:
@@ -337,7 +291,7 @@
   </div>
 
   <footer>
-    Single-file app — all data stored locally. Optional GitHub sync for multi-user access.
+    Single-file app — all data stored locally. Shared tiles are read from your GitHub Gist.
   </footer>
 </main>
 
@@ -416,14 +370,16 @@
 
     <div class="section">
       <h4>Data &amp; Sync</h4>
-      <div class="row" style="gap:8px;">
+      <div class="row" style="gap:8px; flex-wrap:wrap;">
         <button class="btn sm" id="btnSummary">Handoff Summary</button>
         <button class="btn sm" id="btnExport">Export</button>
         <label class="btn sm" for="importFile">Import</label>
         <input id="importFile" type="file" accept=".json" style="display:none" />
         <button class="btn sm" id="btnSetupSync">🔗 Setup Sync</button>
+        <button class="btn sm" id="btnSyncNow">Sync now</button>
         <button class="btn warn sm" id="btnResetShift">Reset Shift Logs</button>
       </div>
+      <div class="muted small" id="writeModeHint" style="margin-top:6px;"></div>
     </div>
 
     <div class="row right" style="margin-top:10px;">
@@ -436,7 +392,7 @@
 <div class="modal-backdrop" id="setupSyncModal">
   <div class="setup-modal">
     <h2>🔗 Setup Multi-User Sync</h2>
-    <p>Want multiple users to see the same sites? Use a free GitHub Gist!</p>
+    <p>Everyone loads the same tiles from a GitHub Gist. To allow edits from this station, paste a GitHub token (gist scope).</p>
 
     <h3>Step 1: Create a GitHub Gist</h3>
     <ol>
@@ -447,11 +403,14 @@
       <li>Copy the Gist ID from the URL (the long string at the end)</li>
     </ol>
 
-    <h3>Step 2: Enter Your Gist ID</h3>
+    <h3>Step 2: Enter Your Gist ID &amp; Token</h3>
     <label class="muted small">GitHub Gist ID:
       <input id="gistId" type="text" placeholder="e.g., abc123def456..." value="" style="margin-top:6px;" />
     </label>
-    <p class="muted small" style="margin-top:8px;">Find it at: <code>gist.github.com/&lt;your-username&gt;/&lt;GIST_ID&gt;</code></p>
+    <label class="muted small" style="margin-top:10px;">GitHub Token (classic, <strong>gist</strong> scope):
+      <input id="gistToken" type="password" placeholder="ghp_xxx..." value="" style="margin-top:6px;" />
+    </label>
+    <p class="muted small">Create at: GitHub → Settings → Developer settings → <strong>Personal access tokens (classic)</strong> → select only <strong>gist</strong>.</p>
 
     <label style="margin-top:12px;">
       <input type="checkbox" id="autoSync" checked />
@@ -568,6 +527,7 @@ const USER_KEY = "scanTracker.currentUser";
 const NERC_KEY = "scanTracker.nercSites";
 const COMPACT_KEY = "scanTracker.compact";
 const TAB_KEY = "scanTracker.currentTab";
+const TOKEN_KEY = "scanTracker.githubToken";
 const DEFAULTS = {
   settings: { defaultInterval: 30, dueSoonMin: 5, sound: true, metricsAutoCloseSec: 15 },
   sites: [],
@@ -577,6 +537,7 @@ let state = loadState();
 let expandedMetrics = new Set();
 let metricsTimers = {};
 let syncConfig = JSON.parse(localStorage.getItem(SYNC_KEY) || "{}");
+let githubToken = localStorage.getItem(TOKEN_KEY) || "";
 let currentUser = localStorage.getItem(USER_KEY) || "";
 let nercSites = JSON.parse(localStorage.getItem(NERC_KEY) || "[]");
 let currentTab = localStorage.getItem(TAB_KEY) || "nerc";
@@ -605,11 +566,10 @@ function saveNercSites() { localStorage.setItem(NERC_KEY, JSON.stringify(nercSit
 function saveTab() { localStorage.setItem(TAB_KEY, currentTab); }
 function id() { return Math.random().toString(36).slice(2,9); }
 
-/* Unique log IDs so we can union logs safely across users */
+/* Unique log IDs for merge-safe union */
 function logId() {
   return `l_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
 }
-
 function fmtMinSec(ms) {
   const s = Math.max(0, Math.floor(ms/1000));
   const m = Math.floor(s/60), r = s%60;
@@ -635,10 +595,8 @@ function ensureChime() {
   if (!chime) {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     chime = () => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "sine"; o.frequency.value = 880;
-      o.connect(g); g.connect(ctx.destination);
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
       g.gain.setValueAtTime(0.0001, ctx.currentTime);
       g.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime+0.01);
       g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.6);
@@ -650,7 +608,7 @@ function notify(title, body) {
   try { if (Notification.permission === "granted") new Notification(title, { body }); } catch(e){}
   if (state.settings.sound) { ensureChime(); chime(); }
 }
-/* Distinct notifier for Quick Timers: speak "Site — Note" */
+/* Distinct notifier for Quick Timers: "Site — Note" */
 function notifyQuickTimer(siteName, note) {
   const shortNote = (note && note.trim()) ? note.trim().slice(0,80) : "Timer";
   const title = `${siteName} — ${shortNote}`;
@@ -664,9 +622,7 @@ function lastScan(siteId) { const logs = state.logs.filter(l => l.siteId === sit
 function computeStatus(site) {
   const last = lastScan(site.id);
   const intervalMin = site.intervalMin ?? null;
-  if (intervalMin === null || intervalMin === 0 || intervalMin === "") {
-    return { last, dueAt: null, remaining: null, status: "adhoc" };
-  }
+  if (intervalMin === null || intervalMin === 0 || intervalMin === "") return { last, dueAt: null, remaining: null, status: "adhoc" };
   const intervalMs = intervalMin * 60 * 1000;
   const dueAt = last ? last + intervalMs : 0;
   const remaining = last ? (dueAt - Date.now()) : -Infinity;
@@ -679,23 +635,27 @@ function computeStatus(site) {
   return { last, dueAt, remaining, status };
 }
 
-/* ===== GIST SHARED MODE (merge-safe) ===== */
-/* Force shared mode defaults if missing */
+/* ===== GIST SHARED (READ-ONLY BY DEFAULT) ===== */
+/* Force shared mode with your Gist ID if missing */
 if (!syncConfig.gistId) {
   syncConfig = { gistId: "f5c88f256c2dbd78e52d18cda76493d3", autoSync: true };
   localStorage.setItem(SYNC_KEY, JSON.stringify(syncConfig));
 }
+function canWrite(){ return !!githubToken; }
+
+function ghHeaders() {
+  const h = { 'Accept': 'application/vnd.github.v3+json' };
+  if (githubToken) h['Authorization'] = `Bearer ${githubToken}`;
+  return h;
+}
 document.addEventListener("DOMContentLoaded", () => {
-  const ss = document.getElementById("syncStatus");
-  if (syncConfig.gistId) ss.textContent = "🔄 Synced";
+  setWriteModeUI();
 });
 
 async function getRemoteData() {
   if (!syncConfig.gistId) return null;
   try {
-    const r = await fetch(`https://api.github.com/gists/${syncConfig.gistId}`, {
-      headers: { 'Accept': 'application/vnd.github.v3+json' }
-    });
+    const r = await fetch(`https://api.github.com/gists/${syncConfig.gistId}`, { headers: ghHeaders() });
     if (!r.ok) return null;
     const gist = await r.json();
     const file = gist.files && gist.files['scan-tracker-data.json'];
@@ -707,28 +667,27 @@ async function getRemoteData() {
   }
 }
 
-/* Merge sites by id (field-level last-write wins) and logs by id (union) */
+/* Merge sites by id; logs union by id; settings combined */
 function mergeData(localData, remoteData) {
   if (!remoteData) return localData;
-
   const merged = structuredClone(localData);
 
-  // Sites
+  // Sites (id -> last-write-wins per field; local wins to reflect current editor)
   const sitesMap = new Map();
   (remoteData.sites || []).forEach(s => sitesMap.set(s.id, s));
   (merged.sites || []).forEach(s => {
     const r = sitesMap.get(s.id) || {};
-    sitesMap.set(s.id, { ...r, ...s }); // local wins on tie (just-acted user)
+    sitesMap.set(s.id, { ...r, ...s });
   });
   merged.sites = Array.from(sitesMap.values()).sort((a,b)=>a.name.localeCompare(b.name));
 
-  // Logs (union by id, fallback key for old entries)
+  // Logs (union by id)
   const logMap = new Map();
   (remoteData.logs || []).forEach(l => logMap.set(l.id || `${l.siteId}_${l.ts}`, l));
   (merged.logs || []).forEach(l => logMap.set(l.id || `${l.siteId}_${l.ts}`, l));
   merged.logs = Array.from(logMap.values()).sort((a,b)=>a.ts - b.ts);
 
-  // Settings (keep both; local overrides to honor current operator changes)
+  // Settings (backfill remote -> local)
   merged.settings = { ...(remoteData.settings || {}), ...(merged.settings || {}) };
 
   return merged;
@@ -739,64 +698,66 @@ async function syncFromGist() {
   const remote = await getRemoteData();
   if (remote && remote.sites && remote.settings) {
     state = mergeData(state, remote);
-    saveState();
-    render();
+    saveState(); render();
   }
 }
 
 async function syncToGist() {
   if (!syncConfig.gistId) return;
+  if (!canWrite()) { setWriteModeUI("read-only"); return; } // hard stop: no writes without token
 
-  // 1) Pull latest remote
+  // Pull latest, merge, push
   const remote = await getRemoteData();
-
-  // 2) Merge (so we don't clobber others)
   const merged = mergeData(state, remote);
+  state = merged; saveState();
 
-  // 3) Save merged locally
-  state = merged;
-  saveState();
-
-  // 4) Push merged back
   try {
     const payload = {
-      files: {
-        'scan-tracker-data.json': {
-          content: JSON.stringify({ data: state, syncedAt: new Date().toISOString() }, null, 2)
-        }
-      }
+      files: { 'scan-tracker-data.json': { content: JSON.stringify({ data: state, syncedAt: new Date().toISOString() }, null, 2) } }
     };
     const r = await fetch(`https://api.github.com/gists/${syncConfig.gistId}`, {
-      method: 'PATCH',
-      headers: { 'Accept': 'application/vnd.github.v3+json' },
-      body: JSON.stringify(payload)
+      method: 'PATCH', headers: ghHeaders(), body: JSON.stringify(payload)
     });
     const ss = document.getElementById("syncStatus");
     if (r.ok) {
       if (ss) { ss.textContent = "✓ Synced"; ss.style.background = "rgba(34,197,94,0.2)"; ss.style.color = "#86efac"; }
-      setTimeout(() => { if (ss) ss.textContent = "🔄 Synced"; }, 1500);
+      setTimeout(() => { if (ss) setWriteModeUI(); }, 1500);
     } else {
       if (ss) { ss.textContent = "⚠ Sync Error"; ss.style.background = "rgba(239,68,68,0.15)"; ss.style.color = "#fca5a5"; }
     }
-  } catch (e) {
+  } catch(e) {
     const ss = document.getElementById("syncStatus");
     if (ss) { ss.textContent = "⚠ Sync Error"; ss.style.background = "rgba(239,68,68,0.15)"; ss.style.color = "#fca5a5"; }
   }
-
-  // 5) Re-render (in case merge changed anything)
   render();
 }
 
 function startSync() {
   if (syncInterval) clearInterval(syncInterval);
   if (!syncConfig.gistId) return;
-
   // initial pull, then schedule
   syncFromGist().then(() => {
     if (syncConfig.autoSync !== false) {
       syncInterval = setInterval(syncFromGist, 30000);
     }
   });
+}
+
+function setWriteModeUI(forceStatus) {
+  const ss = document.getElementById("syncStatus");
+  const hint = document.getElementById("writeModeHint");
+  if (!ss || !hint) return;
+  if (canWrite() && !forceStatus) {
+    ss.textContent = "🔄 Synced";
+    ss.style.background = "rgba(59,130,246,0.2)";
+    ss.style.color = "#93c5fd";
+    hint.textContent = "Write mode: 🔓 enabled — changes will be shared to the Gist.";
+  } else {
+    ss.textContent = "🔒 Read-only (Shared)";
+    ss.style.background = "rgba(148,163,184,0.15)";
+    ss.style.color = "#cbd5e1";
+    hint.textContent = "Write mode: 🔒 read-only — tiles load from Gist; editing is disabled unless you add a token in Sync.";
+  }
 }
 
 /* ===== TIMERS ===== */
@@ -814,14 +775,9 @@ function startTimer(siteId, siteName, minutes, note) {
       clearInterval(timerIntervals[key]);
       delete timers[key];
       delete timerIntervals[key];
-
-      // Distinct audible notification for Quick Timer expiry
       notifyQuickTimer(siteName, note);
-
       render();
-    } else {
-      updateDisplay();
-    }
+    } else { updateDisplay(); }
   }, 1000);
 
   render();
@@ -949,14 +905,11 @@ function render() {
   if (qtSite) {
     const prev = qtSite.value;
     qtSite.innerHTML = "";
-    state.sites
-      .slice()
-      .sort((a,b)=>a.name.localeCompare(b.name))
-      .forEach(s => {
-        const opt = document.createElement("option");
-        opt.value = s.id; opt.textContent = s.name;
-        qtSite.appendChild(opt);
-      });
+    state.sites.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.id; opt.textContent = s.name;
+      qtSite.appendChild(opt);
+    });
     if ([...qtSite.options].some(o => o.value === prev)) qtSite.value = prev;
   }
 
@@ -966,9 +919,8 @@ function render() {
   document.getElementById("defaultInterval").value = state.settings.defaultInterval;
   document.getElementById("dueSoon").value = state.settings.dueSoonMin;
   document.getElementById("btnSound").textContent = `Sound: ${state.settings.sound ? "On" : "Off"}`;
-  const mac = Number(state.settings.metricsAutoCloseSec || 0);
   const macInput = document.getElementById("metricsAutoClose");
-  if (macInput) macInput.value = mac;
+  if (macInput) macInput.value = Number(state.settings.metricsAutoCloseSec || 0);
 
   const q = (document.getElementById("search").value || "").toLowerCase().trim();
   const filter = document.getElementById("filter").value;
@@ -991,9 +943,9 @@ function render() {
     let pass = (filter==="all");
     if (filter !== "all" && d.status !== "adhoc") {
       pass = (filter==="ok" && d.status==="ok")
-        || (filter==="dueSoon" && d.status==="dueSoon")
-        || (filter==="overdue" && d.status==="overdue")
-        || (filter==="never" && d.status==="never");
+          || (filter==="dueSoon" && d.status==="dueSoon")
+          || (filter==="overdue" && d.status==="overdue")
+          || (filter==="never" && d.status==="never");
     }
     if (!match || !pass) return;
 
@@ -1014,6 +966,8 @@ function render() {
       ${hasTimer ? `<span class="badge timer-active">⏱️ ${timerDisplay}</span>` : ''}
     `;
 
+    const write = canWrite();
+
     card.innerHTML = `
       <h3>
         ${showHeaderDot ? `<span class="status-dot ${dotClass}" data-header-dot="${site.id}"></span>` : `<span class="status-dot" data-header-dot="${site.id}" style="display:none;"></span>`}
@@ -1033,9 +987,9 @@ function render() {
       `}
       <div class="site-actions-secondary">
         <button class="btn md success" data-act="scan" data-id="${site.id}" title="Scan now">Scan Now</button>
-        <button class="btn sm" data-act="edit" data-id="${site.id}" title="Edit">🖊</button>
-        <button class="btn timer sm" data-act="timer" data-id="${site.id}" title="Timer">${hasTimer ? 'Cancel ⏱️' : '⏱️'}</button>
-        <button class="btn danger sm" data-act="delete" data-id="${site.id}" title="Delete">🗑</button>
+        ${write ? `<button class="btn sm" data-act="edit" data-id="${site.id}" title="Edit">🖊</button>` : ``}
+        ${write ? `<button class="btn timer sm" data-act="timer" data-id="${site.id}" title="Timer">${hasTimer ? 'Cancel ⏱️' : '⏱️'}</button>` : `<button class="btn timer sm" data-act="timer" data-id="${site.id}" title="Timer">${hasTimer ? 'Cancel ⏱️' : '⏱️'}</button>`}
+        ${write ? `<button class="btn danger sm" data-act="delete" data-id="${site.id}" title="Delete">🗑</button>` : ``}
       </div>
       ${site.metrics?.length ? `
         <button class="toggle-btn ${isExpanded ? 'open' : ''}" data-toggle-id="${site.id}">
@@ -1084,6 +1038,11 @@ function render() {
       [...sortedNonNercCadenced, ...sortedNonNercAdhoc].forEach(s => addSiteCard(s));
     }
   }
+
+  // Disable/enable header actions based on write mode
+  document.getElementById("btnAdd").disabled = !canWrite();
+  document.getElementById("btnNercMgmt").disabled = !canWrite();
+  document.getElementById("btnScanAll").disabled = !canWrite(); // optional: disable mass-scan without write
 
   // Timers section
   const timersSection = document.getElementById("timersSection");
@@ -1146,7 +1105,7 @@ function render() {
       item.className = "nerc-item";
       item.innerHTML = `
         ${site.name}
-        <button class="btn sm" data-nerc-remove="${siteId}">✕</button>
+        ${canWrite() ? `<button class="btn sm" data-nerc-remove="${siteId}">✕</button>` : ""}
       `;
       nercList.appendChild(item);
     }
@@ -1158,8 +1117,8 @@ function render() {
     const sid = btn.getAttribute("data-id");
     const toggleId = btn.getAttribute("data-toggle-id");
     if (act==="scan") btn.onclick = ()=> openScanModal(sid);
-    if (act==="edit") btn.onclick = ()=> openSiteModal(sid);
-    if (act==="delete") btn.onclick = ()=> deleteSite(sid);
+    if (act==="edit") btn.onclick = ()=> canWrite() ? openSiteModal(sid) : toast("Read-only: enable write in Settings → Sync");
+    if (act==="delete") btn.onclick = ()=> canWrite() ? deleteSite(sid) : toast("Read-only: enable write in Settings → Sync");
     if (act==="timer") btn.onclick = ()=>{
       if (timers[sid]) cancelTimer(sid);
       else openTimerModal(sid);
@@ -1167,17 +1126,20 @@ function render() {
     if (toggleId) btn.onclick = ()=> toggleMetrics(toggleId, btn);
   });
 
+  const timersList = document.getElementById("timersList");
   timersList.querySelectorAll("button").forEach(btn=>{
     const timerId = btn.getAttribute("data-timer-cancel");
     if (timerId) btn.onclick = ()=> cancelTimer(timerId);
   });
 
-  nercList.querySelectorAll("button").forEach(btn=>{
+  // NERC remove
+  const nercListEl = document.getElementById("nercList");
+  nercListEl.querySelectorAll("button").forEach(btn=>{
     const removeId = btn.getAttribute("data-nerc-remove");
-    if (removeId) btn.onclick = ()=>{
+    if (removeId) btn.onclick = async ()=>{
+      if (!canWrite()) { toast("Read-only: enable write in Settings → Sync"); return; }
       nercSites = nercSites.filter(id => id !== removeId);
-      saveNercSites();
-      render();
+      saveNercSites(); await syncToGist(); render();
     };
   });
 }
@@ -1243,14 +1205,14 @@ function renderLogs() {
     const intervalMs = intervalMin * 60 * 1000;
     const logs4site = state.logs.filter(l => l.siteId === log.siteId).sort((a,b)=>a.ts-b.ts);
     const prevLogIdx = logs4site.indexOf(log) - 1;
-    let timeSinceLast = null, status = "new";
+    let status = "new";
 
     if (prevLogIdx >= 0) {
-      timeSinceLast = log.ts - logs4site[prevLogIdx].ts;
+      const timeSinceLast = log.ts - logs4site[prevLogIdx].ts;
       const overMs = timeSinceLast - intervalMs;
-      if (overMs < 0) { status = "on-time"; onTime++; }
-      else if (overMs <= 5*60*1000) { status = "late5"; late5++; }
-      else { status = "very-late"; veryLate++; }
+      if (overMs < 0) status = "on-time";
+      else if (overMs <= 5*60*1000) status = "late5";
+      else status = "very-late";
     }
 
     const logDate = new Date(log.ts);
@@ -1271,15 +1233,36 @@ function renderLogs() {
   });
 
   document.getElementById("logTotalScans").textContent = filtered.length;
-  document.getElementById("logOnTime").textContent = onTime;
-  document.getElementById("logLate5").textContent = late5;
-  document.getElementById("logVeryLate").textContent = veryLate;
+  document.getElementById("logOnTime").textContent = filtered.filter(l => {
+    const site = state.sites.find(s => s.id === l.siteId); if (!site) return false;
+    const intervalMin = site.intervalMin ?? state.settings.defaultInterval;
+    const logs4site = state.logs.filter(x => x.siteId === l.siteId).sort((a,b)=>a.ts-b.ts);
+    const idx = logs4site.indexOf(l); if (idx <= 0) return false;
+    return (l.ts - logs4site[idx-1].ts) - (intervalMin*60000) < 0;
+  }).length;
+  document.getElementById("logLate5").textContent = filtered.filter(l => {
+    const site = state.sites.find(s => s.id === l.siteId); if (!site) return false;
+    const intervalMin = site.intervalMin ?? state.settings.defaultInterval;
+    const logs4site = state.logs.filter(x => x.siteId === l.siteId).sort((a,b)=>a.ts-b.ts);
+    const idx = logs4site.indexOf(l); if (idx <= 0) return false;
+    const over = (l.ts - logs4site[idx-1].ts) - (intervalMin*60000);
+    return over >= 0 && over <= 5*60000;
+  }).length;
+  document.getElementById("logVeryLate").textContent = filtered.filter(l => {
+    const site = state.sites.find(s => s.id === l.siteId); if (!site) return false;
+    const intervalMin = site.intervalMin ?? state.settings.defaultInterval;
+    const logs4site = state.logs.filter(x => x.siteId === l.siteId).sort((a,b)=>a.ts-b.ts);
+    const idx = logs4site.indexOf(l); if (idx <= 0) return false;
+    const over = (l.ts - logs4site[idx-1].ts) - (intervalMin*60000);
+    return over > 5*60000;
+  }).length;
 }
 
 /* ===== SITE CRUD ===== */
 let editingSiteId = null;
 
 function openSiteModal(siteId=null) {
+  if (!canWrite()) { toast("Read-only: enable write in Settings → Sync"); return; }
   editingSiteId = siteId;
   document.getElementById("siteTitle").textContent = siteId ? "Edit Site" : "Add Site";
   document.getElementById("siteName").value = "";
@@ -1332,15 +1315,11 @@ function collectMetricsFromTable() {
     const inputs = r.querySelectorAll("input");
     const name = inputs[0].value.trim();
     const baseline = inputs[1].value.trim();
-    return {
-      name,
-      baseline,
-      unit: r.dataset.unit || "",
-      guide: r.dataset.guide || ""
-    };
+    return { name, baseline, unit: r.dataset.unit || "", guide: r.dataset.guide || "" };
   }).filter(m=>m.name);
 }
 async function saveSiteFromModal() {
+  if (!canWrite()) { toast("Read-only: enable write in Settings → Sync"); return; }
   const name = document.getElementById("siteName").value.trim();
   const isAdhoc = document.getElementById("intervalTypeAdhoc").checked;
 
@@ -1365,6 +1344,7 @@ async function saveSiteFromModal() {
   toast("Site saved & synced!");
 }
 async function deleteSite(siteId) {
+  if (!canWrite()) { toast("Read-only: enable write in Settings → Sync"); return; }
   if (!confirm("Delete this site and its logs?")) return;
   state.sites = state.sites.filter(s=>s.id!==siteId);
   state.logs = state.logs.filter(l=>l.siteId!==siteId);
@@ -1418,17 +1398,19 @@ async function saveScan() {
   inputs.forEach(inp=>{ const v = inp.value.trim(); if (v) metrics[inp.getAttribute("data-metric")] = v; });
   const note = document.getElementById("scanNotes").value.trim();
   state.logs.push({ id: logId(), siteId: site.id, ts: Date.now(), metrics, note, user: currentUser });
-  saveState(); await syncToGist();
+  saveState();
+  if (canWrite()) { await syncToGist(); }
   document.getElementById("scanModal").style.display = "none";
   render();
   cancelTimer(scanningSiteId);
-  toast(`✓ Scan logged by ${currentUser}`);
+  toast(`✓ Scan logged by ${currentUser}${canWrite() ? " (shared)" : " (local)"}`);
 }
 
 /* ===== SCAN ALL NERC ===== */
 async function scanAllNerc() {
   if (nercSites.length === 0) { toast("No NERC sites configured"); return; }
   if (!currentUser) { toast("Please set your name first!"); showUserModal(); return; }
+  if (!canWrite()) { toast("Read-only: enable write in Settings → Sync"); return; }
   let count = 0;
   for (const siteId of nercSites) {
     const site = state.sites.find(s => s.id === siteId);
@@ -1453,11 +1435,18 @@ function openTimerModal(siteId) {
 }
 
 /* ===== NERC MANAGEMENT ===== */
-function openNercModal() { document.getElementById("nercModal").style.display = "flex"; }
+function openNercModal() { 
+  if (!canWrite()) { toast("Read-only: enable write in Settings → Sync"); return; }
+  document.getElementById("nercModal").style.display = "flex"; 
+}
 
 /* ===== BULK ADD ===== */
-function openBulk() { document.getElementById("bulkNames").value = ""; document.getElementById("bulkModal").style.display = "flex"; }
+function openBulk() { 
+  if (!canWrite()) { toast("Read-only: enable write in Settings → Sync"); return; }
+  document.getElementById("bulkNames").value = ""; document.getElementById("bulkModal").style.display = "flex"; 
+}
 async function saveBulk() {
+  if (!canWrite()) { toast("Read-only: enable write in Settings → Sync"); return; }
   const text = document.getElementById("bulkNames").value;
   const names = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
   const interval = state.settings.defaultInterval;
@@ -1538,8 +1527,7 @@ function tick() {
       const lastNotified = sessionStorage.getItem(key);
       const everyMs = 5*60*1000;
       if (!lastNotified || (Date.now()-Number(lastNotified) > everyMs)) {
-        // Routine scan overdue (unchanged message)
-        notify("Scan overdue", s.name + " needs a scan");
+        notify("Scan overdue", s.name + " needs a scan"); // routine scan alert unchanged
         sessionStorage.setItem(key, String(Date.now()));
       }
     }
@@ -1580,13 +1568,13 @@ document.getElementById("scanSave").onclick = saveScan;
 
 document.getElementById("btnNercMgmt").onclick = openNercModal;
 document.getElementById("btnCloseNerc").onclick = ()=> document.getElementById("nercModal").style.display = "none";
-document.getElementById("btnAddNerc").onclick = ()=>{
+document.getElementById("btnAddNerc").onclick = async ()=>{
+  if (!canWrite()) { toast("Read-only: enable write in Settings → Sync"); return; }
   const siteId = document.getElementById("nercSelect").value;
   if (!siteId) { toast("Please select a site"); return; }
   if (!nercSites.includes(siteId)) {
     nercSites.push(siteId);
-    saveNercSites();
-    render();
+    saveNercSites(); await syncToGist(); render();
     toast("Site added to NERC list");
   }
 };
@@ -1631,11 +1619,11 @@ document.getElementById("btnNotify").onclick = async ()=>{
     else toast("Notifications not granted");
   } catch(e){ toast("Notifications not supported"); }
 };
-document.getElementById("btnSound").onclick = ()=>{ state.settings.sound = !state.settings.sound; saveState(); syncToGist(); render(); };
+document.getElementById("btnSound").onclick = ()=>{ state.settings.sound = !state.settings.sound; saveState(); if (canWrite()) syncToGist(); render(); };
 document.getElementById("search").oninput = render;
 document.getElementById("filter").onchange = render;
-document.getElementById("defaultInterval").onchange = e=>{ state.settings.defaultInterval = Math.max(1, Number(e.target.value)||30); saveState(); syncToGist(); render(); };
-document.getElementById("dueSoon").onchange = e=>{ state.settings.dueSoonMin = Math.max(1, Number(e.target.value)||5); saveState(); syncToGist(); render(); };
+document.getElementById("defaultInterval").onchange = e=>{ state.settings.defaultInterval = Math.max(1, Number(e.target.value)||30); saveState(); if (canWrite()) syncToGist(); render(); };
+document.getElementById("dueSoon").onchange = e=>{ state.settings.dueSoonMin = Math.max(1, Number(e.target.value)||5); saveState(); if (canWrite()) syncToGist(); render(); };
 
 /* Compact toggle — DEFAULT TO ON if not set */
 const compactStored = localStorage.getItem(COMPACT_KEY);
@@ -1658,67 +1646,49 @@ document.getElementById("btnCompact").onclick = () => {
 document.getElementById("metricsAutoClose").onchange = (e)=>{
   const val = Math.max(0, Number(e.target.value) || 0);
   state.settings.metricsAutoCloseSec = val;
-  saveState(); syncToGist();
+  saveState(); if (canWrite()) syncToGist();
   [...expandedMetrics].forEach(siteId => scheduleMetricsAutoClose(siteId));
 };
 
 /* Reset shift */
 document.getElementById("btnResetShift").onclick = ()=>{
   if (!confirm("Clear all scan logs for this shift? Sites & settings are kept.")) return;
-  state.logs = []; saveState(); syncToGist(); render(); toast("Shift logs cleared");
+  state.logs = []; saveState(); if (canWrite()) syncToGist(); render(); toast("Shift logs cleared");
 };
 
 /* Setup Sync modal */
 document.getElementById("btnSetupSync").onclick = ()=>{
   document.getElementById("gistId").value = syncConfig.gistId || "";
   document.getElementById("autoSync").checked = syncConfig.autoSync !== false;
+  const tokEl = document.getElementById("gistToken");
+  if (tokEl) tokEl.value = githubToken || "";
   document.getElementById("setupSyncModal").style.display = "flex";
 };
 document.getElementById("btnCancelSync").onclick = ()=>{ document.getElementById("setupSyncModal").style.display = "none"; };
 document.getElementById("btnEnableSync").onclick = ()=>{
   const gistId = document.getElementById("gistId").value.trim();
+  const tokEl = document.getElementById("gistToken");
+  const token = tokEl ? tokEl.value.trim() : "";
   if (!gistId) { toast("Please enter a Gist ID"); return; }
   syncConfig = { gistId: gistId, autoSync: document.getElementById("autoSync").checked };
   localStorage.setItem(SYNC_KEY, JSON.stringify(syncConfig));
+  if (token) { githubToken = token; localStorage.setItem(TOKEN_KEY, githubToken); }
   document.getElementById("setupSyncModal").style.display = "none";
-  toast("Sync enabled! Syncing now...");
+  toast("Sync settings saved. Pulling latest...");
+  setWriteModeUI();
   startSync();
-  document.getElementById("syncStatus").textContent = "🔄 Synced";
 };
 
-/* Quick Timer pill — Set/Cancel */
-document.getElementById("btnQtSet").onclick = ()=>{
-  const siteId = document.getElementById("qtSite").value;
-  const site = state.sites.find(s=>s.id===siteId);
-  if (!site) { toast("Select a site"); return; }
-  const minutes = Math.max(1, Number(document.getElementById("qtMinutes").value) || 0);
-  const note = document.getElementById("qtNote").value.trim();
-  startTimer(siteId, site.name, minutes, note);
-};
-document.getElementById("btnQtCancel").onclick = ()=>{
-  const siteId = document.getElementById("qtSite").value;
-  if (!siteId) { toast("Select a site"); return; }
-  if (!timers[siteId]) { toast("No active timer for that site"); return; }
-  cancelTimer(siteId);
-};
-
-/* Timer modal buttons */
-document.getElementById("timerCancel").onclick = ()=> document.getElementById("timerModal").style.display = "none";
-document.getElementById("timerSave").onclick = ()=>{
-  const siteId = document.getElementById("timerModal").dataset.siteId;
-  const site = state.sites.find(s=>s.id===siteId);
-  const minutes = Math.max(1, Number(document.getElementById("timerMinutes").value) || 0);
-  const note = document.getElementById("timerNote").value.trim();
-  document.getElementById("timerModal").style.display = "none";
-  startTimer(siteId, site.name, minutes, note);
+/* Manual sync */
+document.getElementById("btnSyncNow").onclick = async () => {
+  await syncFromGist();
+  if (canWrite()) await syncToGist();
+  else toast("Pulled latest tiles (read-only).");
 };
 
 /* Tabs */
 function setTab(tab) {
-  currentTab = tab;
-  saveTab();
-  renderTabs();
-  render();
+  currentTab = tab; saveTab(); renderTabs(); render();
 }
 document.getElementById("tab-nerc").onclick = ()=> setTab("nerc");
 document.getElementById("tab-nonnerc").onclick = ()=> setTab("nonnerc");
@@ -1727,15 +1697,8 @@ document.querySelector(".tabbar").addEventListener("keydown", (e)=>{
   const order = ["tab-nerc","tab-nonnerc","tab-all"];
   const idx = order.indexOf(document.activeElement.id);
   if (idx === -1) return;
-  if (e.key === "ArrowRight") {
-    e.preventDefault();
-    const nxt = document.getElementById(order[(idx+1)%order.length]);
-    nxt.focus(); nxt.click();
-  } else if (e.key === "ArrowLeft") {
-    e.preventDefault();
-    const prev = document.getElementById(order[(idx-1+order.length)%order.length]);
-    prev.focus(); prev.click();
-  }
+  if (e.key === "ArrowRight") { e.preventDefault(); const nxt = document.getElementById(order[(idx+1)%order.length]); nxt.focus(); nxt.click(); }
+  else if (e.key === "ArrowLeft") { e.preventDefault(); const prev = document.getElementById(order[(idx-1+order.length)%order.length]); prev.focus(); prev.click(); }
 });
 
 /* Seed example sites on first load */
