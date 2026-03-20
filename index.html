@@ -69,7 +69,7 @@
     display: flex;
     gap: 6px;
     align-items: flex-end;
-    margin: 8px 0 2px 0; /* slightly reduced */
+    margin: 8px 0 2px 0;
     border-top: 1px solid #1f2937;
     padding-top: 10px;
   }
@@ -83,7 +83,7 @@
     border-bottom: none;
     cursor: pointer;
     font-size: 11px;
-    transform: translateY(2px) scale(0.95); /* slightly smaller inactive */
+    transform: translateY(2px) scale(0.95);
     opacity: 0.75;
     transition: all .12s ease;
   }
@@ -103,9 +103,9 @@
   }
   .card {
     background: linear-gradient(180deg, #0b1220, #0b1320);
-    border: 1px solid #172036; /* softer border */
+    border: 1px solid #172036;
     border-radius: 12px; padding: 10px; position: relative;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.22); /* lighter shadow */
+    box-shadow: 0 3px 8px rgba(0,0,0,0.22);
   }
   .card h3 { margin: 0 0 4px 0; font-size: 14px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 
@@ -113,7 +113,6 @@
     display: inline-block; font-size: 10px; color: var(--text);
     background: var(--badge); padding: 2px 6px; border-radius: 999px; border: 1px solid #374151;
   }
-  /* De-busy: slimmer status badge */
   .badge.status { 
     font-size: 9.5px;
     padding: 1px 6px;
@@ -134,7 +133,6 @@
   .amber { background: var(--warn); }
   .red { background: var(--danger); }
 
-  /* De-busy: tighter tile pills only */
   .card .pill { 
     padding: 2px 6px; 
     font-size: 10px; 
@@ -150,7 +148,6 @@
   .kpi .label { font-size: 9.5px; color: var(--muted); opacity: 0.9; margin-bottom: 0; }
   .kpi .value { font-size: 12.5px; font-weight: 600; margin-top: 0; font-variant-numeric: tabular-nums; }
 
-  /* Subtle separator between status and KPIs to declutter */
   .card .badge.status + .kpis::before {
     content: ""; display: block; height: 1px;
     background: linear-gradient(to right, transparent, #1a2230, transparent);
@@ -171,14 +168,14 @@
 
   .table { width:100%; border-collapse: collapse; }
   .table th, .table td { border-bottom: 1px dashed #1f2937; padding: 4px; text-align: left; font-size: 11px; }
-  .table.small th, .table.small td { font-size: 10px; } /* Shrink “Reference Points” table text slightly */
+  .table.small th, .table.small td { font-size: 10px; }
   .right-text { text-align: right; }
   .toast { position: fixed; right: 12px; bottom: 12px; background: #111827; border: 1px solid #374151; color: var(--text); padding: 10px 12px; border-radius: 10px; opacity: 0.95; z-index: 1000; }
   .hidden { display: none; }
 
   .toggle-btn {
     background: none; border: none; color: var(--muted); cursor: pointer; padding: 0;
-    font-size: 10px; /* shrunk slightly to reduce clutter */
+    font-size: 10px;
     display: flex; align-items: center; gap: 4px; margin-top: 6px;
   }
   .toggle-btn:hover { color: var(--text); }
@@ -582,7 +579,7 @@ let metricsTimers = {};
 let syncConfig = JSON.parse(localStorage.getItem(SYNC_KEY) || "{}");
 let currentUser = localStorage.getItem(USER_KEY) || "";
 let nercSites = JSON.parse(localStorage.getItem(NERC_KEY) || "[]");
-let currentTab = localStorage.getItem(TAB_KEY) || "nerc"; // "nerc" | "nonnerc" | "all"
+let currentTab = localStorage.getItem(TAB_KEY) || "nerc";
 let syncInterval = null;
 
 let timers = {};          // { [siteId]: { siteName, endTime, note } }
@@ -606,56 +603,13 @@ function loadState() {
 function saveState() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 function saveNercSites() { localStorage.setItem(NERC_KEY, JSON.stringify(nercSites)); }
 function saveTab() { localStorage.setItem(TAB_KEY, currentTab); }
-
-function syncToGist() {
-  if (!syncConfig.gistId) return;
-  const data = { data: state, syncedAt: new Date().toISOString() };
-  fetch(`https://api.github.com/gists/${syncConfig.gistId}`, {
-    method: 'PATCH',
-    headers: { 'Accept': 'application/vnd.github.v3+json' },
-    body: JSON.stringify({
-      files: { 'scan-tracker-data.json': { content: JSON.stringify(data, null, 2) } }
-    })
-  }).then(r => {
-    if (r.ok) {
-      document.getElementById("syncStatus").textContent = "✓ Synced";
-      document.getElementById("syncStatus").style.background = "rgba(34,197,94,0.2)";
-      document.getElementById("syncStatus").style.color = "#86efac";
-      setTimeout(() => {
-        if (syncConfig.gistId) document.getElementById("syncStatus").textContent = "🔄 Synced";
-      }, 2000);
-    }
-  }).catch(err => console.log("Sync error:", err));
-}
-function syncFromGist() {
-  if (!syncConfig.gistId) return;
-  fetch(`https://api.github.com/gists/${syncConfig.gistId}`, {
-    headers: { 'Accept': 'application/vnd.github.v3+json' }
-  })
-  .then(r => r.json())
-  .then(gist => {
-    if (gist.files && gist.files['scan-tracker-data.json']) {
-      const content = gist.files['scan-tracker-data.json'].content;
-      const data = JSON.parse(content).data || {};
-      if (data.sites && data.settings) {
-        state = data;
-        saveState();
-        render();
-      }
-    }
-  })
-  .catch(err => console.log("Fetch error:", err));
-}
-function startSync() {
-  if (syncInterval) clearInterval(syncInterval);
-  if (!syncConfig.gistId) return;
-  syncFromGist();
-  if (syncConfig.autoSync) {
-    syncInterval = setInterval(() => { syncFromGist(); }, 30000);
-  }
-}
-
 function id() { return Math.random().toString(36).slice(2,9); }
+
+/* Unique log IDs so we can union logs safely across users */
+function logId() {
+  return `l_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+}
+
 function fmtMinSec(ms) {
   const s = Math.max(0, Math.floor(ms/1000));
   const m = Math.floor(s/60), r = s%60;
@@ -696,6 +650,14 @@ function notify(title, body) {
   try { if (Notification.permission === "granted") new Notification(title, { body }); } catch(e){}
   if (state.settings.sound) { ensureChime(); chime(); }
 }
+/* Distinct notifier for Quick Timers: speak "Site — Note" */
+function notifyQuickTimer(siteName, note) {
+  const shortNote = (note && note.trim()) ? note.trim().slice(0,80) : "Timer";
+  const title = `${siteName} — ${shortNote}`;
+  const body = "Quick Timer";
+  try { if (Notification.permission === "granted") new Notification(title, { body }); } catch(e){}
+  if (state.settings.sound) { ensureChime(); chime(); }
+}
 
 /* ===== DERIVED DATA ===== */
 function lastScan(siteId) { const logs = state.logs.filter(l => l.siteId === siteId).sort((a,b)=>b.ts-a.ts); return logs[0]?.ts || null; }
@@ -717,6 +679,126 @@ function computeStatus(site) {
   return { last, dueAt, remaining, status };
 }
 
+/* ===== GIST SHARED MODE (merge-safe) ===== */
+/* Force shared mode defaults if missing */
+if (!syncConfig.gistId) {
+  syncConfig = { gistId: "f5c88f256c2dbd78e52d18cda76493d3", autoSync: true };
+  localStorage.setItem(SYNC_KEY, JSON.stringify(syncConfig));
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const ss = document.getElementById("syncStatus");
+  if (syncConfig.gistId) ss.textContent = "🔄 Synced";
+});
+
+async function getRemoteData() {
+  if (!syncConfig.gistId) return null;
+  try {
+    const r = await fetch(`https://api.github.com/gists/${syncConfig.gistId}`, {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!r.ok) return null;
+    const gist = await r.json();
+    const file = gist.files && gist.files['scan-tracker-data.json'];
+    if (!file || !file.content) return null;
+    const parsed = JSON.parse(file.content);
+    return parsed.data || null;
+  } catch {
+    return null;
+  }
+}
+
+/* Merge sites by id (field-level last-write wins) and logs by id (union) */
+function mergeData(localData, remoteData) {
+  if (!remoteData) return localData;
+
+  const merged = structuredClone(localData);
+
+  // Sites
+  const sitesMap = new Map();
+  (remoteData.sites || []).forEach(s => sitesMap.set(s.id, s));
+  (merged.sites || []).forEach(s => {
+    const r = sitesMap.get(s.id) || {};
+    sitesMap.set(s.id, { ...r, ...s }); // local wins on tie (just-acted user)
+  });
+  merged.sites = Array.from(sitesMap.values()).sort((a,b)=>a.name.localeCompare(b.name));
+
+  // Logs (union by id, fallback key for old entries)
+  const logMap = new Map();
+  (remoteData.logs || []).forEach(l => logMap.set(l.id || `${l.siteId}_${l.ts}`, l));
+  (merged.logs || []).forEach(l => logMap.set(l.id || `${l.siteId}_${l.ts}`, l));
+  merged.logs = Array.from(logMap.values()).sort((a,b)=>a.ts - b.ts);
+
+  // Settings (keep both; local overrides to honor current operator changes)
+  merged.settings = { ...(remoteData.settings || {}), ...(merged.settings || {}) };
+
+  return merged;
+}
+
+async function syncFromGist() {
+  if (!syncConfig.gistId) return;
+  const remote = await getRemoteData();
+  if (remote && remote.sites && remote.settings) {
+    state = mergeData(state, remote);
+    saveState();
+    render();
+  }
+}
+
+async function syncToGist() {
+  if (!syncConfig.gistId) return;
+
+  // 1) Pull latest remote
+  const remote = await getRemoteData();
+
+  // 2) Merge (so we don't clobber others)
+  const merged = mergeData(state, remote);
+
+  // 3) Save merged locally
+  state = merged;
+  saveState();
+
+  // 4) Push merged back
+  try {
+    const payload = {
+      files: {
+        'scan-tracker-data.json': {
+          content: JSON.stringify({ data: state, syncedAt: new Date().toISOString() }, null, 2)
+        }
+      }
+    };
+    const r = await fetch(`https://api.github.com/gists/${syncConfig.gistId}`, {
+      method: 'PATCH',
+      headers: { 'Accept': 'application/vnd.github.v3+json' },
+      body: JSON.stringify(payload)
+    });
+    const ss = document.getElementById("syncStatus");
+    if (r.ok) {
+      if (ss) { ss.textContent = "✓ Synced"; ss.style.background = "rgba(34,197,94,0.2)"; ss.style.color = "#86efac"; }
+      setTimeout(() => { if (ss) ss.textContent = "🔄 Synced"; }, 1500);
+    } else {
+      if (ss) { ss.textContent = "⚠ Sync Error"; ss.style.background = "rgba(239,68,68,0.15)"; ss.style.color = "#fca5a5"; }
+    }
+  } catch (e) {
+    const ss = document.getElementById("syncStatus");
+    if (ss) { ss.textContent = "⚠ Sync Error"; ss.style.background = "rgba(239,68,68,0.15)"; ss.style.color = "#fca5a5"; }
+  }
+
+  // 5) Re-render (in case merge changed anything)
+  render();
+}
+
+function startSync() {
+  if (syncInterval) clearInterval(syncInterval);
+  if (!syncConfig.gistId) return;
+
+  // initial pull, then schedule
+  syncFromGist().then(() => {
+    if (syncConfig.autoSync !== false) {
+      syncInterval = setInterval(syncFromGist, 30000);
+    }
+  });
+}
+
 /* ===== TIMERS ===== */
 function startTimer(siteId, siteName, minutes, note) {
   const minNum = Math.max(1, Number(minutes) || 0);
@@ -726,12 +808,16 @@ function startTimer(siteId, siteName, minutes, note) {
 
   if (timerIntervals[key]) clearInterval(timerIntervals[key]);
   timerIntervals[key] = setInterval(() => {
-    const remaining = timers[key]?.endTime - Date.now();
-    if (remaining <= 0) {
+    const t = timers[key];
+    const remaining = t ? (t.endTime - Date.now()) : 0;
+    if (!t || remaining <= 0) {
       clearInterval(timerIntervals[key]);
       delete timers[key];
       delete timerIntervals[key];
-      notify("⏱️ Timer Alert!", `Time to check ${siteName}!`);
+
+      // Distinct audible notification for Quick Timer expiry
+      notifyQuickTimer(siteName, note);
+
       render();
     } else {
       updateDisplay();
@@ -971,7 +1057,7 @@ function render() {
     grid.appendChild(card);
   };
 
-  // Tab-aware rendering (keep NERC divider only on NERC tab)
+  // Tab-aware rendering
   if (currentTab === "nerc") {
     [...sortedNercCadenced].forEach(s => addSiteCard(s));
     if (sortedNercAdhoc.length > 0) {
@@ -1254,7 +1340,7 @@ function collectMetricsFromTable() {
     };
   }).filter(m=>m.name);
 }
-function saveSiteFromModal() {
+async function saveSiteFromModal() {
   const name = document.getElementById("siteName").value.trim();
   const isAdhoc = document.getElementById("intervalTypeAdhoc").checked;
 
@@ -1273,12 +1359,12 @@ function saveSiteFromModal() {
   } else {
     state.sites.push({ id: id(), name, intervalMin, metrics });
   }
-  saveState(); syncToGist();
+  saveState(); await syncToGist();
   document.getElementById("siteModal").style.display = "none";
   render();
   toast("Site saved & synced!");
 }
-function deleteSite(siteId) {
+async function deleteSite(siteId) {
   if (!confirm("Delete this site and its logs?")) return;
   state.sites = state.sites.filter(s=>s.id!==siteId);
   state.logs = state.logs.filter(l=>l.siteId!==siteId);
@@ -1286,7 +1372,7 @@ function deleteSite(siteId) {
   expandedMetrics.delete(siteId);
   if (metricsTimers[siteId]) { clearTimeout(metricsTimers[siteId]); delete metricsTimers[siteId]; }
   cancelTimer(siteId);
-  saveState(); saveNercSites(); syncToGist(); render(); toast("Deleted");
+  saveState(); saveNercSites(); await syncToGist(); render(); toast("Deleted");
 }
 
 /* ===== SCAN MODAL ===== */
@@ -1324,15 +1410,15 @@ function openScanModal(siteId) {
   document.getElementById("scanNotes").value = "";
   document.getElementById("scanModal").style.display = "flex";
 }
-function saveScan() {
+async function saveScan() {
   if (!currentUser) { toast("Please set your name first!"); showUserModal(); return; }
   const site = state.sites.find(s=>s.id===scanningSiteId);
   const inputs = document.querySelectorAll("#scanMetrics [data-metric]");
   const metrics = {};
   inputs.forEach(inp=>{ const v = inp.value.trim(); if (v) metrics[inp.getAttribute("data-metric")] = v; });
   const note = document.getElementById("scanNotes").value.trim();
-  state.logs.push({ siteId: site.id, ts: Date.now(), metrics, note, user: currentUser });
-  saveState(); syncToGist();
+  state.logs.push({ id: logId(), siteId: site.id, ts: Date.now(), metrics, note, user: currentUser });
+  saveState(); await syncToGist();
   document.getElementById("scanModal").style.display = "none";
   render();
   cancelTimer(scanningSiteId);
@@ -1340,19 +1426,19 @@ function saveScan() {
 }
 
 /* ===== SCAN ALL NERC ===== */
-function scanAllNerc() {
+async function scanAllNerc() {
   if (nercSites.length === 0) { toast("No NERC sites configured"); return; }
   if (!currentUser) { toast("Please set your name first!"); showUserModal(); return; }
   let count = 0;
   for (const siteId of nercSites) {
     const site = state.sites.find(s => s.id === siteId);
     if (site) {
-      state.logs.push({ siteId: site.id, ts: Date.now(), metrics: {}, note: "Auto-scanned via Scan All", user: currentUser });
+      state.logs.push({ id: logId(), siteId: site.id, ts: Date.now(), metrics: {}, note: "Auto-scanned via Scan All", user: currentUser });
       cancelTimer(siteId);
       count++;
     }
   }
-  saveState(); syncToGist(); render();
+  saveState(); await syncToGist(); render();
   toast(`✓ Scanned all ${count} NERC sites`);
 }
 
@@ -1371,12 +1457,12 @@ function openNercModal() { document.getElementById("nercModal").style.display = 
 
 /* ===== BULK ADD ===== */
 function openBulk() { document.getElementById("bulkNames").value = ""; document.getElementById("bulkModal").style.display = "flex"; }
-function saveBulk() {
+async function saveBulk() {
   const text = document.getElementById("bulkNames").value;
   const names = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
   const interval = state.settings.defaultInterval;
   for (const n of names) { state.sites.push({ id: id(), name: n, intervalMin: interval, metrics: [] }); }
-  saveState(); syncToGist(); render();
+  saveState(); await syncToGist(); render();
   document.getElementById("bulkModal").style.display = "none";
   toast(`✓ Added ${names.length} site(s) & synced!`);
 }
@@ -1452,6 +1538,7 @@ function tick() {
       const lastNotified = sessionStorage.getItem(key);
       const everyMs = 5*60*1000;
       if (!lastNotified || (Date.now()-Number(lastNotified) > everyMs)) {
+        // Routine scan overdue (unchanged message)
         notify("Scan overdue", s.name + " needs a scan");
         sessionStorage.setItem(key, String(Date.now()));
       }
