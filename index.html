@@ -585,8 +585,8 @@ let nercSites = JSON.parse(localStorage.getItem(NERC_KEY) || "[]");
 let currentTab = localStorage.getItem(TAB_KEY) || "nerc"; // "nerc" | "nonnerc" | "all"
 let syncInterval = null;
 
-let timers = {};          // { [siteId]: { siteName, endTime, note } }
-let timerIntervals = {};  // { [siteId]: setIntervalId }
+let timers = {};          // siteId -> { siteName, endTime, note, alarming, lastBeep }
+let timerIntervals = {};  // siteId -> setIntervalId
 
 /* ===== UTILITIES ===== */
 function loadState() {
@@ -787,17 +787,22 @@ function startTimer(siteId, siteName, minutes, note) {
 
   if (timerIntervals[key]) clearInterval(timerIntervals[key]);
   timerIntervals[key] = setInterval(() => {
-    const remaining = timers[key]?.endTime - Date.now();
-    if (remaining <= 0) {
-      clearInterval(timerIntervals[key]);
-      delete timers[key];
-      delete timerIntervals[key];
-      notify("⏱️ Timer Alert!", `Time to check ${siteName}!`);
-      render();
-    } else {
-      updateDisplay();
-    }
-  }, 1000);
+  const t = timers[key];
+  if (!t) return;
+
+  const remaining = t.endTime - Date.now();
+
+  if (remaining <= 0 && !t.alarming) {
+    t.alarming = true;
+    maybeAlarm(key);
+  }
+
+  if (t.alarming) {
+    maybeAlarm(key);
+  }
+
+  updateDisplay();
+}, 1000);
 
   render();
   toast(`Timer set for ${siteName}: ${minNum}m`);
@@ -810,14 +815,26 @@ function cancelTimer(siteId) {
   toast("Timer cancelled");
 }
 function formatTimerDisplay(siteId) {
-  if (!timers[siteId]) return "";
-  const remaining = timers[siteId].endTime - Date.now();
-  if (remaining <= 0) return "0:00";
+  const t = timers[siteId];
+  if (!t) return "";
+  if (t.alarming) return "⚠️ DUE";
+  const remaining = Math.max(0, t.endTime - Date.now());
   const mins = Math.floor(remaining / 60000);
   const secs = Math.floor((remaining % 60000) / 1000);
-  return `${mins}:${String(secs).padStart(2, '0')}`;
+  return `${mins}:${String(secs).padStart(2,'0')}`;
 }
+function maybeAlarm(siteId) {
+  const t = timers[siteId];
+  if (!t || !t.alarming) return;
 
+  const now = Date.now();
+  const INTERVAL = 10000; // 10 seconds
+
+  if (!t.lastBeep || now - t.lastBeep >= INTERVAL) {
+    notify("⏱️ TIMER DUE", `Time to check ${t.siteName}`);
+    t.lastBeep = now;
+  }
+}
 /* ===== SORTING/grouping ===== */
 function getSortedSites() {
   const sites = [...state.sites];
@@ -1073,7 +1090,9 @@ function render() {
         ${timer.note ? `<div class="timer-note">${timer.note}</div>` : ''}
         <div class="timer-display">${formatTimerDisplay(siteId)}</div>
         <div class="timer-actions">
-          <button class="btn sm" data-timer-cancel="${siteId}">Cancel</button>
+         <button class="btn danger sm" data-timer-cancel="${siteId}">
+  Acknowledge
+</button>
         </div>
       `;
       timersList.appendChild(timerCard);
